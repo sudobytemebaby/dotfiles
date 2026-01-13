@@ -183,7 +183,6 @@ paru -S --needed --noconfirm \
 
 # Development tools - languages and runtimes
 paru -S --needed --noconfirm \
-    bun-bin \
     go \
     nodejs \
     npm \

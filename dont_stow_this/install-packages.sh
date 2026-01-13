@@ -21,22 +21,22 @@ if command -v paru &> /dev/null; then
     echo -e "${YELLOW}paru is already installed, skipping...${NC}\n"
 else
     echo -e "${GREEN}Installing paru AUR helper...${NC}"
-    
+
     # Install dependencies for building paru
     sudo pacman -S --needed --noconfirm base-devel git
-    
+
     # Clone paru repository
     cd /tmp
     git clone https://aur.archlinux.org/paru.git
     cd paru
-    
+
     # Build and install paru
     makepkg -si --noconfirm
-    
+
     # Clean up
     cd ~
     rm -rf /tmp/paru
-    
+
     echo -e "${GREEN}paru installed successfully!${NC}\n"
 fi
 
@@ -69,7 +69,6 @@ paru -S --needed --noconfirm \
     grub \
     grub-btrfs \
     os-prober \
-    plymouth \
 
 # Filesystem and snapshot management
 paru -S --needed --noconfirm \
@@ -85,7 +84,6 @@ paru -S --needed --noconfirm \
 paru -S --needed --noconfirm \
     libva-mesa-driver \
     mesa \
-    mesa-vdpau \
     vulkan-radeon
 
 # Audio system
@@ -106,19 +104,14 @@ paru -S --needed --noconfirm \
     hyprpaper \
     hyprpolkitagent \
     hyprshot \
-    waybar \
-    wlogout
+    swappy \
+    quickshell
 
 # XDG portals
 paru -S --needed --noconfirm \
     xdg-desktop-portal \
     xdg-desktop-portal-gtk \
     xdg-desktop-portal-hyprland
-
-# Notifications and system overlays
-paru -S --needed --noconfirm \
-    swaync \
-    swayosd
 
 # Display manager and system utilities
 paru -S --needed --noconfirm \
@@ -145,7 +138,6 @@ paru -S --needed --noconfirm \
 paru -S --needed --noconfirm \
     bat \
     btop \
-    cbonsai \
     eza \
     fzf \
     less \
@@ -166,6 +158,21 @@ paru -S --needed --noconfirm \
     loupe \
     nautilus \
     onlyoffice-bin
+
+# Filesystem support and device management
+paru -S --needed --noconfirm \
+    exfatprogs \
+    gvfs \
+    gvfs-gphoto2 \
+    gvfs-mtp \
+    gvfs-nfs \
+    gvfs-smb \
+    ntfs-3g \
+    udisks2
+
+# Firmware updates
+paru -S --needed --noconfirm \
+    fwupd
 
 # Development tools - compilers and build tools
 paru -S --needed --noconfirm \
@@ -196,8 +203,6 @@ paru -S --needed --noconfirm \
 # Network utilities
 paru -S --needed --noconfirm \
     curl \
-    httpie \
-    httpie-desktop-bin \
     openssh \
     wget \
     xray
@@ -207,7 +212,6 @@ paru -S --needed --noconfirm \
     arch-audit \
     auto-cpufreq \
     earlyoom \
-    fail2ban \
     smartmontools \
     ufw
 
@@ -216,10 +220,6 @@ paru -S --needed --noconfirm \
     7zip \
     unrar \
     unzip
-
-# Application launcher
-paru -S --needed --noconfirm \
-    rofi 
 
 # Clipboard manager
 paru -S --needed --noconfirm \
@@ -254,8 +254,10 @@ paru -S --needed --noconfirm \
 paru -S --needed --noconfirm \
     localsend-bin \
     mpv \
+    celluloid \
     obsidian \
-    qbittorrent \
+    fragments \
+    qalculate-gtk \
     zen-browser-bin
 
 # System utilities

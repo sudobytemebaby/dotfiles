@@ -1,119 +1,110 @@
 return {
-	"rebelot/kanagawa.nvim",
+	"AlexvZyl/nordic.nvim",
 	lazy = false,
 	priority = 1000,
 	config = function()
-		require("kanagawa").setup({
-			-- ============================================================
-			-- BASIC SETTINGS
-			-- ============================================================
-			compile = false,
-			undercurl = true,
-			transparent = true,
-			dimInactive = false,
-			terminalColors = true,
+		require("nordic").setup({
+			-- This callback can be used to override the colors used in the base palette.
+			on_palette = function(palette) end,
+			-- This callback can be used to override the colors used in the extended palette.
+			after_palette = function(palette) end,
+			-- This callback can be used to override hl before they are applied.
+			on_highlight = function(hl, palette)
+				-- Telescope borderless styling
+				hl.TelescopeNormal = { bg = palette.none }
+				hl.TelescopeBorder = { bg = palette.none, fg = palette.gray4 }
+				-- Telescope Prompt
+				hl.TelescopePromptNormal = { bg = palette.none }
+				hl.TelescopePromptBorder = { bg = palette.none, fg = palette.gray4 }
+				hl.TelescopePromptTitle = { bg = palette.magenta.base, fg = palette.black0, bold = true }
+				hl.TelescopePromptPrefix = { bg = palette.none, fg = palette.magenta.base }
+				-- Telescope Results
+				hl.TelescopeResultsNormal = { bg = palette.none }
+				hl.TelescopeResultsBorder = { bg = palette.none, fg = palette.none }
+				hl.TelescopeResultsTitle = { bg = palette.blue1, fg = palette.black0, bold = true }
+				-- Telescope Preview
+				hl.TelescopePreviewNormal = { bg = palette.none }
+				hl.TelescopePreviewBorder = { bg = palette.none, fg = palette.gray4 }
+				hl.TelescopePreviewTitle = { bg = palette.green.base, fg = palette.black0, bold = true }
+				-- Telescope Selection
+				hl.TelescopeSelection = { bg = palette.gray2, fg = palette.green.base, bold = true }
+				hl.TelescopeSelectionCaret = { bg = palette.gray2, fg = palette.green.base, bold = true }
 
-			-- ============================================================
-			-- STYLES
-			-- ============================================================
-			commentStyle = { italic = true },
-			functionStyle = {},
-			keywordStyle = { italic = false },
-			statementStyle = { bold = true },
-			typeStyle = {},
+				-- LSP floating windows with borders
+				hl.NormalFloat = { bg = palette.none }
+				hl.FloatBorder = { bg = palette.none, fg = palette.gray4 }
+				hl.FloatTitle = { bg = palette.none, fg = palette.cyan.base, bold = true }
 
-			-- ============================================================
-			-- COLORS
-			-- ============================================================
-			colors = {
-				palette = {},
-				theme = {
-					wave = {},
-					lotus = {},
-					dragon = {},
-					all = {
-						ui = {
-							bg_gutter = "none",
-						},
-					},
-				},
-			},
+				-- Blink.cmp completion menu with borders
+				hl.BlinkCmpMenu = { bg = palette.none }
+				hl.BlinkCmpMenuBorder = { bg = palette.none, fg = palette.gray4 }
+				hl.BlinkCmpMenuSelection = { bg = palette.gray4, bold = true }
+				hl.BlinkCmpDoc = { bg = palette.none }
+				hl.BlinkCmpDocBorder = { bg = palette.none, fg = palette.gray4 }
+				hl.BlinkCmpSignatureHelp = { bg = palette.none }
+				hl.BlinkCmpSignatureHelpBorder = { bg = palette.none, fg = palette.gray4 }
 
-			-- ============================================================
-			-- HIGHLIGHT OVERRIDES
-			-- ============================================================
-			overrides = function(colors)
-				local theme = colors.theme
+				-- Neo-tree borderless
+				hl.NeoTreeNormal = { bg = palette.none }
+				hl.NeoTreeNormalNC = { bg = palette.none }
+				hl.NeoTreeWinSeparator = { bg = palette.none, fg = palette.none }
+				hl.NeoTreeBorder = { bg = palette.none, fg = palette.none }
+				hl.NeoTreeEndOfBuffer = { bg = palette.none }
 
-				-- Helper function for diagnostic colors
-				local function makeDiagnosticColor(color)
-					local c = require("kanagawa.lib.color")
-					return {
-						fg = color,
-						bg = c(color):blend(theme.ui.bg, 0.95):to_hex(),
-					}
-				end
+				-- Plugins window
+				hl.MasonNormal = { bg = palette.none, fg = palette.bg1 }
+				hl.LazyNormal = { bg = palette.none, fg = palette.bg1 }
 
-				return {
-					-- ------------------------------------------------
-					-- FLOATING WINDOWS
-					-- ------------------------------------------------
-					NormalFloat = { bg = "none" },
-					FloatBorder = { bg = "none" },
-					FloatTitle = { bg = "none" },
-					NormalDark = { fg = theme.ui.fg_dim, bg = theme.ui.bg_m3 },
+				-- Statusline
+				hl.StatusLine = { bg = palette.none }
+				hl.StatusLineNC = { bg = palette.none }
 
-					-- ------------------------------------------------
-					-- PLUGIN WINDOWS
-					-- ------------------------------------------------
-					LazyNormal = { bg = theme.ui.bg_p1, fg = theme.ui.fg_dim },
-					MasonNormal = { bg = "none", fg = theme.ui.fg_dim },
-
-					TelescopeSelection = { bg = theme.ui.none, fg = theme.diag.info, bold = true },
-					TelescopeSelectionCaret = { bg = theme.ui.none, fg = theme.ui.special, bold = true },
-					--TelescopeMatching = { bg = theme.ui.none, fg = colors.blue },
-
-					-- ------------------------------------------------
-					-- DIAGNOSTICS
-					-- ------------------------------------------------
-					DiagnosticVirtualTextHint = makeDiagnosticColor(theme.diag.hint),
-					DiagnosticVirtualTextInfo = makeDiagnosticColor(theme.diag.info),
-					DiagnosticVirtualTextWarn = makeDiagnosticColor(theme.diag.warning),
-					DiagnosticVirtualTextError = makeDiagnosticColor(theme.diag.error),
-
-					-- ------------------------------------------------
-					-- BLINK.CMP (COMPLETION)
-					-- ------------------------------------------------
-					BlinkCmpMenu = { bg = theme.ui.none, fg = theme.ui.fg_dim },
-					BlinkCmpMenuBorder = { bg = "none", fg = theme.ui.bg_p2 },
-					BlinkCmpMenuSelection = { bg = theme.ui.bg_p2 },
-					BlinkCmpDoc = { bg = "none" },
-					BlinkCmpDocBorder = { bg = "none", fg = theme.ui.bg_p1 },
-					BlinkCmpSignatureHelp = { bg = "none" },
-					BlinkCmpSignatureHelpBorder = { bg = "none", fg = theme.ui.bg_p1 },
-
-					Visual = { bg = theme.ui.bg_p2, fg = theme.ui.none },
-					VisualNOS = { bg = theme.ui.bg_p2, fg = theme.ui.none },
-
-					-- ------------------------------------------------
-					-- STATUSLINE (LUALINE TRANSPARENCY)
-					-- ------------------------------------------------
-					StatusLine = { bg = "none" },
-					StatusLineNC = { bg = "none" },
-				}
+				-- Selection in visual mode
+				hl.Visual = { bg = palette.gray2, fg = palette.none }
+				hl.VisualNOS = { bg = palette.gray2, fg = palette.none }
 			end,
-
-			-- ============================================================
-			-- THEME SELECTION
-			-- ============================================================
-			theme = "wave",
-			background = {
-				dark = "wave",
-				light = "lotus",
+			-- Enable bold keywords.
+			bold_keywords = false,
+			-- Enable italic comments.
+			italic_comments = true,
+			-- Enable editor background transparency.
+			transparent = {
+				bg = true,
+				float = true,
+			},
+			-- Enable brighter float border.
+			bright_border = false,
+			-- Reduce the overall amount of blue in the theme (diverges from base Nord).
+			reduced_blue = true,
+			-- Swap the dark background with the normal one.
+			swap_backgrounds = false,
+			-- Cursorline options.  Also includes visual/selection.
+			cursorline = {
+				-- Bold font in cursorline.
+				bold = false,
+				-- Bold cursorline number.
+				bold_number = true,
+				-- Available styles: 'dark', 'light'.
+				theme = "dark",
+				-- Blending the cursorline bg with the buffer bg.
+				blend = 0.85,
+			},
+			noice = {
+				-- Available styles: `classic`, `flat`.
+				style = "classic",
+			},
+			telescope = {
+				-- Available styles: `classic`, `flat`.
+				style = "flat",
+			},
+			leap = {
+				dim_backdrop = false,
+			},
+			ts_context = {
+				-- Enables dark background for treesitter-context window
+				dark_background = true,
 			},
 		})
-
-		-- Apply the colorscheme
-		vim.cmd.colorscheme("kanagawa")
+		vim.cmd.colorscheme("nordic")
 	end,
 }

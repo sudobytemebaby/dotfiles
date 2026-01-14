@@ -2,6 +2,12 @@
   process-unmapped-keys yes
   danger-enable-cmd yes
   log-layer-changes no
+  concurrent-tap-hold yes
+)
+
+;; Remap Copilot key combination (lmet+lsft+f23) to output only rmet
+(defchordsv2
+  (lmet lsft f23) rmet 50 first-release ()
 )
 
 (defsrc

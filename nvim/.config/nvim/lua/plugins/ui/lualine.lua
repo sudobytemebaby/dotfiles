@@ -4,36 +4,36 @@ return {
 		local auto = require("lualine.themes.auto")
 
 		-- ============================================================================
-		-- KANAGAWA COLOR PALETTE
+		-- NORD COLOR PALETTE
 		-- ============================================================================
 		local colors = {
-			accent = "#7E9CD8",
-			accent_fixed = "#658594",
-			secondary = "#98BB6C",
-			secondary_fixed = "#76946A",
-			tertiary = "#7FB4CA",
-			tertiary_fixed = "#7AA89F",
-			bg0 = "#16161D",
-			bg1 = "#1F1F28",
-			bg2 = "#2A2A37",
-			bg_bright = "#54546D",
-			bg_dim = "#16161D",
-			error = "#E82424",
-			on_error = "#1F1F28",
-			fg = "#DCD7BA",
-			fg_strong = "#DCD7BA",
-			fg_muted = "#727169",
-			border = "#54546D",
-			border_strong = "#957FB8",
-			border_dim = "#363646",
+			accent = "#88c0d0",
+			accent_fixed = "#81a1c1",
+			secondary = "#8fbcbb",
+			secondary_fixed = "#5e81ac",
+			tertiary = "#a3be8c",
+			tertiary_fixed = "#d08770",
+			bg0 = "#2e3440",
+			bg1 = "#434c5e",
+			bg2 = "#3b4252",
+			bg_bright = "#4c566a",
+			bg_dim = "#0E1115",
+			error = "#bf616a",
+			on_error = "#4c566a",
+			fg = "#d8dee9",
+			fg_strong = "#eceff4",
+			fg_muted = "#e5e9f0",
+			border = "#42474E",
+			border_strong = "#8D9199",
+			border_dim = "#2E3135",
 			overlay = "#000000",
 			scrim = "#000000",
-			mode_normal = "#7E9CD8",
-			mode_insert = "#98BB6C",
-			mode_visual = "#957FB8",
-			mode_replace = "#E82424",
-			mode_command = "#DCA561",
-			mode_terminal = "#7AA89F",
+			mode_normal = "#81a1c1",
+			mode_insert = "#a3be8c",
+			mode_visual = "#b48ead",
+			mode_replace = "#bf616a",
+			mode_command = "#ebcb8b",
+			mode_terminal = "#8fbcbb",
 		}
 
 		-- ============================================================================
@@ -76,7 +76,7 @@ return {
 			-- GIT BRANCH - current branch name
 			git_branch = {
 				"branch",
-				color = { fg = colors.fg, bg = "NONE" },
+				color = { fg = colors.fg_muted, bg = "NONE" },
 				padding = { left = 0, right = 0 },
 			},
 
@@ -85,7 +85,7 @@ return {
 				"filetype",
 				icon_only = true,
 				colored = false,
-				color = { fg = colors.fg, bg = "NONE" },
+				color = { fg = colors.fg_muted, bg = "NONE" },
 				padding = { left = 0, right = 1 },
 			},
 
@@ -101,7 +101,7 @@ return {
 					unnamed = "[?]",
 					newfile = "[!]",
 				},
-				color = { fg = colors.fg, bg = "NONE" },
+				color = { fg = colors.fg_muted, bg = "NONE" },
 				padding = { left = 0, right = 0 },
 			},
 

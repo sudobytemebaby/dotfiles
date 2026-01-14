@@ -18,17 +18,26 @@ $character\
 palette = 'colors'
 
 [palettes.colors]
-accent = '#7E9CD8'
-accent-fixed = '#658594'
-secondary = '#98BB6C'
-secondary-fixed = '#76946A'
-tertiary = '#957FB8'
-tertiary-fixed = '#938AA9'
-bg = '#1F1F28'
-bg-dim = '#16161D'
-fg = '#DCD7BA'
-fg-strong = '#DCD7BA'
-fg-muted = '#727169'
+# Primary colors
+accent = '#94cdf7'
+accent-fixed = '#94cdf7'
+
+# Secondary colors
+secondary = '#b7c9d9'
+secondary-fixed = '#b7c9d9'
+
+# Tertiary colors
+tertiary = '#cec0e8'
+tertiary-fixed = '#cec0e8'
+
+# Background colors
+bg = '#101417'
+bg-dim = '#101417'
+
+# Foreground colors
+fg = '#dfe3e8'
+fg-strong = '#00344d'
+fg-muted = '#c1c7ce'
 
 [fill]
 symbol = ' '
@@ -36,10 +45,9 @@ symbol = ' '
 [git_branch]
 style = 'fg:accent'
 symbol = ' '
-format = '[on](color8) [$symbol$branch ]($style)'
+format = '[on](fg:accent) [$symbol$branch ]($style)'
 
 [git_status]
-style = 'fg:fg'
 format = '([\[$all_status$ahead_behind\]]($style) )'
 staged = '󰐕'
 deleted = ''

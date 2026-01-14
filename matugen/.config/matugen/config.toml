@@ -1,22 +1,10 @@
 [config]
 templates_dir = "~/.config/matugen/templates"
 
-# --- Waybar ---
-[templates.waybar]
-input_path = "~/.config/matugen/templates/waybar/waybar-colors.css"
-output_path = "~/.config/waybar/colors/colors.css"
-
-# --- Kitty ---
-[templates.kitty]
-input_path = "~/.config/matugen/templates/kitty/kitty-colors.conf"
-output_path = "~/.config/kitty/colors.conf"
-post_hook = 'pkill -SIGUSR1 kitty'
-
 # --- GTK theming ---
 [templates.gtk3]
 input_path = '~/.config/matugen/templates/gtk/gtk-colors.css'
 output_path = '~/.config/gtk-3.0/colors/colors.css'
-post_hook = 'gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark"'
 
 [templates.gtk4]
 input_path = '~/.config/matugen/templates/gtk/gtk-colors.css'
@@ -27,22 +15,17 @@ output_path = '~/.config/gtk-4.0/colors/colors.css'
 input_path = "~/.config/matugen/templates/hyprland/hyprland.conf"
 output_path = "~/.config/hypr/colors.conf"
 
-# --- Hyprlock ---
-[templates.hyprlock]
-input_path = "~/.config/matugen/templates/hyprlock/hyprlock.conf"
-output_path = "~/.config/hypr/hyprlock.conf"
+# --- Quickshell ---
+[templates.quickshell]
+input_path = "~/.config/matugen/templates/quickshell/Theme.qml"
+output_path = "~/.config/quickshell/theme/Theme.qml"
 
-# --- Swaync ---
-[templates.swaync]
-input_path = "~/.config/matugen/templates/swaync/colors.css"
-output_path = "~/.config/swaync/colors/colors.css"
-
-# --- Swayosd ---
-[templates.swayosd]
-input_path = "~/.config/matugen/templates/swayosd/colors.css"
-output_path = "~/.config/swayosd/colors/colors.css"
+# --- Kitty ---
+[templates.kitty]
+input_path = "~/.config/matugen/templates/kitty/theme.conf"
+output_path = "~/.config/kitty/theme.conf"
 
 # --- Starship ---
 [templates.starship]
-input_path = "~/.config/matugen/templates/starship/starship.toml"
-output_path = "~/.config/starship/starship.toml"
+input_path = '~/.config/matugen/templates/starship/starship.toml'
+output_path = '~/.config/starship/starship.toml'

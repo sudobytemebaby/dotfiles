@@ -1,15 +1,6 @@
 [config]
 templates_dir = "~/.config/matugen/templates"
 
-# --- GTK theming ---
-[templates.gtk3]
-input_path = '~/.config/matugen/templates/gtk/gtk-colors.css'
-output_path = '~/.config/gtk-3.0/colors/colors.css'
-
-[templates.gtk4]
-input_path = '~/.config/matugen/templates/gtk/gtk-colors.css'
-output_path = '~/.config/gtk-4.0/colors/colors.css'
-
 # --- Hyprland ---
 [templates.hyprland]
 input_path = "~/.config/matugen/templates/hyprland/hyprland.conf"
@@ -18,14 +9,34 @@ output_path = "~/.config/hypr/colors.conf"
 # --- Quickshell ---
 [templates.quickshell]
 input_path = "~/.config/matugen/templates/quickshell/Theme.qml"
-output_path = "~/.config/quickshell/theme/Theme.qml"
+output_path = "~/.config/quickshell/shared/theme/Theme.qml"
+
+# --- GTK theming ---
+[templates.gtk3]
+input_path = '~/.config/matugen/templates/gtk/gtk-colors.css'
+output_path = '~/.config/gtk-3.0/colors/colors.css'
+
+[templates.gtk4]
+input_path = '~/.config/matugen/templates/gtk/gtk-colors.css'
+output_path = '~/.config/gtk-4.0/colors/colors.css'
+post_hook = 'gsettings set org.gnome.desktop.interface color-scheme "default" && gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"'
 
 # --- Kitty ---
 [templates.kitty]
 input_path = "~/.config/matugen/templates/kitty/theme.conf"
 output_path = "~/.config/kitty/theme.conf"
 
-# --- Starship ---
-[templates.starship]
-input_path = '~/.config/matugen/templates/starship/starship.toml'
-output_path = '~/.config/starship/starship.toml'
+# --- Foot ---
+[templates.foot]
+input_path = "~/.config/matugen/templates/foot/colors.ini"
+output_path = "~/.config/foot/colors.ini"
+
+# --- Yazi ---
+[templates.yazi]
+input_path = "~/.config/matugen/templates/yazi/theme.toml"
+output_path = "~/.config/yazi/theme.toml"
+
+# --- Tmux ---
+[templates.tmux]
+input_path = "~/.config/matugen/templates/tmux/colors.conf"
+output_path = "~/.config/tmux/colors.conf"

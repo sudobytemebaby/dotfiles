@@ -146,7 +146,8 @@ QtObject {
     // ============================================================================
     
     readonly property QtObject typography: QtObject {
-        readonly property string fontFamily: "Ubuntu Nerd Font Propo"
+        readonly property string fontFamily: "Google Sans"
+        readonly property string fontFamilyDisplay: "Google Sans"
         
         readonly property int xs: 10
         readonly property int sm: 12

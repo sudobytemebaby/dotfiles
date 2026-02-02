@@ -22,7 +22,7 @@ if not test -f $fisher_path/functions/fisher.fish
     fisher install meaningful-ooo/sponge
     fisher install PatrickF1/fzf.fish
     
-    echo "All plugins installed. Run 'tide configure' to set up your prompt"
+    echo "All plugins installed. Ura!"
 else
     # Fisher is installed, just source it
     source $fisher_path/functions/fisher.fish

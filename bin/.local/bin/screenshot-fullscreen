@@ -1,0 +1,6 @@
+grim -t ppm - | satty \
+    --filename - \
+    --early-exit \
+    --copy-command "wl-copy --type image/png" \
+    --action-on-enter save-to-clipboard \
+    --output-filename ~/Pictures/screenshots/full_$(date '+%Y%m%d-%H%M%S').png

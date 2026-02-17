@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 grim -t ppm - | satty \
     --filename - \
     --early-exit \

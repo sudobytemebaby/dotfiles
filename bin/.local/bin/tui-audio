@@ -1,0 +1,2 @@
+#!/bin/sh
+exec footclient --app-id floating_term_s -e /usr/sbin/wiremix "$@"

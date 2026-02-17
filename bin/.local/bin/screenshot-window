@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
-set -e # Остановить выполнение при ошибке
+set -e
 
-# 1. Получаем ID активного воркспейса отдельно
 WS_ID=$(hyprctl activeworkspace -j | jq '.id')
 
-# 2. Передаем WS_ID в jq через флаг --argjson (чтобы число осталось числом)
 GEOM=$(hyprctl clients -j | jq -r --argjson ws "$WS_ID" '
   .[] | 
   select(.workspace.id == $ws and .mapped == true) | 
   "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"
 ' | slurp)
 
-# Проверка на отмену (Esc)
 [ -z "$GEOM" ] && exit 0
 
-# Основная команда захвата
 grim -t ppm -g "$GEOM" - | satty \
     --filename - \
     --early-exit \

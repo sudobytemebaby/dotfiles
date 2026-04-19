@@ -48,6 +48,7 @@ audio/aac=mpv.desktop
 # Torrents
 application/x-bittorrent=de.haeckerfelix.Fragments.desktop
 x-scheme-handler/magnet=de.haeckerfelix.Fragments.desktop
+x-scheme-handler/bruno=bruno.desktop
 
 
 [Added Associations]

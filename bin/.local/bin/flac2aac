@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+# flac2aac — Convert a directory of FLAC files to AAC (M4A)
+#            Preserves all tags, embedded cover art, and replay-gain data.
+#
+# Usage: flac2aac [OPTIONS] [DIRECTORY]
+
+set -euo pipefail
+
+# ── defaults ──────────────────────────────────────────────────────────────────
+BITRATE="192k"
+OUTPUT_DIR=""
+JOBS=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 4)
+RECURSIVE=false
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+die()  { printf '%s: error: %s\n' "$(basename "$0")" "$*" >&2; exit 1; }
+info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+ok()   { printf '\033[1;32m  ✓\033[0m %s\n' "$*"; }
+warn() { printf '\033[1;33m  !\033[0m %s\n' "$*"; }
+err()  { printf '\033[1;31m  ✗\033[0m %s\n' "$*" >&2; }
+
+usage() {
+    cat <<'EOF'
+Usage: flac2aac [OPTIONS] [DIRECTORY]
+
+Convert FLAC files to AAC (.m4a) preserving metadata and cover art.
+
+Options:
+  -b BITRATE    Audio bitrate          (default: 256k)
+  -o DIR        Output directory       (default: "<input> [AAC]")
+  -j JOBS       Parallel encode jobs   (default: nproc)
+  -r            Recurse into subdirs
+  -h            Show this help
+
+The output container is M4A (MPEG-4 Audio), which supports both AAC and
+iTunes-compatible cover art embedding.  Cover art priority:
+  1. Embedded image already in the FLAC stream
+  2. cover.{jpg,jpeg,png} found alongside the FLAC files
+  3. No artwork (audio-only conversion)
+EOF
+}
+
+# ── argument parsing ───────────────────────────────────────────────────────────
+while getopts ':b:o:j:rh' opt; do
+    case $opt in
+        b) BITRATE="$OPTARG" ;;
+        o) OUTPUT_DIR="$OPTARG" ;;
+        j) JOBS="$OPTARG" ;;
+        r) RECURSIVE=true ;;
+        h) usage; exit 0 ;;
+        :) die "option -$OPTARG requires an argument" ;;
+        ?) die "unknown option: -$OPTARG" ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+INPUT_DIR="${1:-.}"
+[[ -d "$INPUT_DIR" ]] || die "not a directory: $INPUT_DIR"
+INPUT_DIR="$(realpath "$INPUT_DIR")"
+
+[[ -z "$OUTPUT_DIR" ]] && OUTPUT_DIR="${INPUT_DIR} [AAC]"
+
+command -v ffmpeg  >/dev/null 2>&1 || die "ffmpeg not found in PATH"
+command -v ffprobe >/dev/null 2>&1 || die "ffprobe not found in PATH"
+
+# ── discover files ─────────────────────────────────────────────────────────────
+mapfile -d '' FLAC_FILES < <(
+    if $RECURSIVE; then
+        find "$INPUT_DIR" -type f -iname '*.flac' -print0 | sort -z
+    else
+        find "$INPUT_DIR" -maxdepth 1 -type f -iname '*.flac' -print0 | sort -z
+    fi
+)
+
+[[ ${#FLAC_FILES[@]} -gt 0 ]] || die "no FLAC files found in: $INPUT_DIR"
+
+info "Found ${#FLAC_FILES[@]} FLAC file(s) in: $INPUT_DIR"
+info "Output dir  : $OUTPUT_DIR"
+info "Bitrate     : $BITRATE  |  Jobs: $JOBS"
+
+mkdir -p "$OUTPUT_DIR"
+
+# ── per-file conversion ────────────────────────────────────────────────────────
+convert_one() {
+    local src="$1"
+    local src_dir
+    src_dir="$(dirname "$src")"
+
+    # Preserve subdirectory structure when -r is used
+    local rel_dir
+    rel_dir="$(realpath --relative-to="$INPUT_DIR" "$src_dir")"
+    local dst_dir="$OUTPUT_DIR"
+    [[ "$rel_dir" != "." ]] && dst_dir="$OUTPUT_DIR/$rel_dir"
+    mkdir -p "$dst_dir"
+
+    local base
+    base="$(basename "${src%.flac}")"
+    local dst="$dst_dir/${base}.m4a"
+
+    # Already converted? Skip.
+    [[ -f "$dst" ]] && { warn "skip (exists): ${base}.m4a"; return 0; }
+
+    # Probe for an embedded video (cover art) stream
+    local has_embedded_art
+    has_embedded_art=$(
+        ffprobe -v error -select_streams v:0 \
+                -show_entries stream=codec_type \
+                -of default=noprint_wrappers=1:nokey=1 \
+                "$src" 2>/dev/null || true
+    )
+
+    # Look for a sidecar cover image in the same directory
+    local cover_file=""
+    for candidate in "$src_dir/cover.jpg" "$src_dir/cover.jpeg" \
+                     "$src_dir/cover.png" "$src_dir/folder.jpg" \
+                     "$src_dir/front.jpg"; do
+        [[ -f "$candidate" ]] && { cover_file="$candidate"; break; }
+    done
+
+    # Build the ffmpeg command as an array (safe quoting, no eval)
+    local -a cmd=(
+        ffmpeg -v error -stats
+        -i "$src"
+    )
+
+    local -a map_args=( -map 0:a )
+    local -a video_args=()
+
+    if [[ -n "$has_embedded_art" ]]; then
+        # Copy the embedded image directly into the M4A
+        map_args+=( -map 0:v:0 )
+        video_args=( -c:v copy -disposition:v:0 attached_pic )
+    elif [[ -n "$cover_file" ]]; then
+        # Inject the sidecar cover image
+        cmd+=( -i "$cover_file" )
+        map_args+=( -map 1:v:0 )
+        video_args=(
+            -c:v mjpeg
+            -q:v 2
+            -disposition:v:0 attached_pic
+            -metadata:s:v title="Album cover"
+            -metadata:s:v comment="Cover (front)"
+        )
+    fi
+
+    cmd+=(
+        "${map_args[@]}"
+        -c:a aac
+        -b:a "$BITRATE"
+        "${video_args[@]}"
+        -map_metadata 0          # copy all global metadata tags
+        -movflags +faststart     # web-friendly: move moov atom to front
+        -y                       # overwrite dst if it somehow exists
+        "$dst"
+    )
+
+    if "${cmd[@]}" 2>&1 | tail -1 >/dev/null; then
+        ok "${base}.m4a"
+    else
+        err "FAILED: $base"
+        rm -f "$dst"
+        return 1
+    fi
+}
+
+export -f convert_one warn ok err
+export OUTPUT_DIR INPUT_DIR BITRATE
+
+# ── parallel execution via xargs ───────────────────────────────────────────────
+FAILED=0
+
+# Use a simple parallel loop with a job-slot semaphore so we can track failures
+declare -a pids=()
+declare -A pid_file=()
+
+flush_jobs() {
+    for pid in "${pids[@]}"; do
+        if ! wait "$pid"; then
+            FAILED=$((FAILED + 1))
+        fi
+    done
+    pids=()
+}
+
+for src in "${FLAC_FILES[@]}"; do
+    # Throttle to $JOBS parallel workers
+    while [[ ${#pids[@]} -ge $JOBS ]]; do
+        new_pids=()
+        for pid in "${pids[@]}"; do
+            if kill -0 "$pid" 2>/dev/null; then
+                new_pids+=("$pid")
+            else
+                wait "$pid" || FAILED=$((FAILED + 1))
+            fi
+        done
+        pids=("${new_pids[@]}")
+        [[ ${#pids[@]} -ge $JOBS ]] && sleep 0.1
+    done
+
+    convert_one "$src" &
+    pids+=($!)
+done
+
+flush_jobs
+
+# ── summary ───────────────────────────────────────────────────────────────────
+TOTAL=${#FLAC_FILES[@]}
+PASSED=$((TOTAL - FAILED))
+
+printf '\n'
+info "$(printf 'Done: %d/%d converted successfully' "$PASSED" "$TOTAL")"
+[[ $FAILED -gt 0 ]] && { err "$FAILED file(s) failed — check output above"; exit 1; }
+
+exit 0

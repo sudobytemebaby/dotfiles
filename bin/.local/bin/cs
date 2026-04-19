@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Проверяем, переданы ли оба аргумента
+if [ "$#" -ne 2 ]; then
+    echo "Использование: $0 \"Имя артиста\" \"Название альбома\""
+    exit 1
+fi
+
+ARTIST=$1
+ALBUM=$2
+SIZE=1200
+FILENAME="cover.jpg"
+
+# Проверяем, установлен ли sacad
+if ! command -v sacad &> /dev/null; then
+    echo "Ошибка: sacad не установлен. Установите его через 'paru -S sacad' или 'pip install sacad'."
+    exit 1
+fi
+
+echo "Ищу обложку для: $ARTIST - $ALBUM ($SIZE px)..."
+
+# Запуск поиска
+sacad "$ARTIST" "$ALBUM" $SIZE "$FILENAME"
+
+# Проверка результата
+if [ -f "$FILENAME" ]; then
+    echo "Готово! Обложка сохранена как $FILENAME"
+else
+    echo "Ошибка: Обложка не найдена."
+    exit 1
+fi

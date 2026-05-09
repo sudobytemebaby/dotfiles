@@ -49,6 +49,7 @@ audio/aac=mpv.desktop
 application/x-bittorrent=de.haeckerfelix.Fragments.desktop
 x-scheme-handler/magnet=de.haeckerfelix.Fragments.desktop
 x-scheme-handler/bruno=bruno.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 
 
 [Added Associations]

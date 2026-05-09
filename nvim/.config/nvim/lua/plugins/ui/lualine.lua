@@ -108,7 +108,7 @@ return {
 			-- DIAGNOSTICS - errors/warnings/info/hints (only when present)
 			diagnostics = {
 				"diagnostics",
-				sources = { "nvim_diagnostic", "coc" },
+				sources = { "nvim_diagnostic" },
 				sections = { "error", "warn", "info", "hint" },
 				diagnostics_color = {
 					error = { fg = colors.error, bg = "NONE" },

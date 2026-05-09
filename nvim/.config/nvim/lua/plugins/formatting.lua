@@ -12,8 +12,6 @@ return {
 				javascriptreact = { "prettier" },
 				typescriptreact = { "prettier" },
 
-				svelte = { "prettier" },
-
 				css = { "prettier" },
 				html = { "prettier" },
 
@@ -24,9 +22,11 @@ return {
 				lua = { "stylua" },
 
 				go = { "gofumpt" },
+
+				qml = { "qmlformat" },
 			},
 			format_on_save = {
-				lsp_fallback = true,
+				lsp_format = "fallback",
 				async = false,
 				timeout_ms = 3000,
 			},
@@ -34,7 +34,7 @@ return {
 
 		vim.keymap.set({ "n", "v" }, "<leader>mp", function()
 			conform.format({
-				lsp_fallback = true,
+				lsp_format = "fallback",
 				async = false,
 				timeout_ms = 1000,
 			})

@@ -1,8 +1,5 @@
 local opt = vim.opt
 
--- Set <Space> as leader key for custom mappings
-vim.g.mapleader = " "
-
 -- Line numbers + relative line numbers always enabled
 opt.nu = true
 opt.relativenumber = true

@@ -17,7 +17,7 @@ vim.diagnostic.config({
 	},
 	float = {
 		border = "rounded",
-		source = "always",
+		source = true,
 		header = "",
 		prefix = "",
 		focusable = false,
@@ -42,7 +42,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 		-- Diagnostics
 		opts.desc = "Show buffer diagnostics"
-		keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", opts)
+		keymap.set("n", "<leader>D", vim.diagnostic.setloclist, opts)
 
 		opts.desc = "Show line diagnostics"
 		keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)

@@ -10,7 +10,6 @@ return {
 		local mason_lspconfig = require("mason-lspconfig")
 		local mason_tool_installer = require("mason-tool-installer")
 
-		-- Enable mason and configure icons
 		mason.setup({
 			ui = {
 				icons = {
@@ -23,10 +22,8 @@ return {
 		})
 
 		mason_lspconfig.setup({
-			-- List of LSP servers for mason to install
 			ensure_installed = {
 				"ts_ls",
-				"svelte",
 				"html",
 				"cssls",
 				"lua_ls",
@@ -37,24 +34,37 @@ return {
 				"pyright",
 				"yamlls",
 			},
-			-- Auto-install configured servers (with lspconfig)
-			automatic_installation = true, -- not the same as ensure_installed
+			automatic_installation = true,
 		})
 
 		mason_tool_installer.setup({
-			-- Linters and formatters basicly
 			ensure_installed = {
-				"prettier", -- prettier formatter
-				"stylua", -- lua formatter
-				"eslint_d", -- js linter
+				"prettier",
+				"stylua",
+				"eslint_d",
 
-				"gofumpt", -- Strict Go formatter
-				"goimports-reviser", -- Go Imports formatter
-				"golines", -- Lines Go shortener
+				"gofumpt",
+				"goimports-reviser",
+				"golines",
 
-				"yamllint", -- Linter for yaml
-				"yamlfmt", -- Formatter for yaml
+				"yamllint",
+				"yamlfmt",
 			},
+		})
+
+		-- Enable LSP servers (configs live in after/lsp/<server>.lua)
+		vim.lsp.enable({
+			"ts_ls",
+			"html",
+			"cssls",
+			"lua_ls",
+			"emmet_ls",
+			"tailwindcss",
+			"gopls",
+			"rust_analyzer",
+			"pyright",
+			"yamlls",
+			"qmlls", -- not mason-managed, uses system Qt6 install
 		})
 	end,
 }

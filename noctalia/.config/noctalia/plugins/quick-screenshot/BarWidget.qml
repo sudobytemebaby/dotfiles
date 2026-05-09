@@ -22,7 +22,7 @@ NIconButton {
     applyUiScale: false
     customRadius: Style.radiusL
     icon: "screenshot"
-    tooltipText: "Quick Screenshot"
+    tooltipText: "Screenshot"
     tooltipDirection: BarService.getTooltipDirection(screenName)
     colorBg: Style.capsuleColor
     colorFg: Color.mOnSurface

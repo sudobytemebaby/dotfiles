@@ -71,7 +71,7 @@ Item {
                 }
 
                 NText {
-                    text: "Quick Screenshot"
+                    text: "Screenshot"
                     pointSize: Style.fontSizeL
                     font.weight: Style.fontWeightBold
                     color: Color.mOnSurface

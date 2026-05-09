@@ -1,17 +1,17 @@
 [config]
 
-[templates]
+[templates.hyprland]
+input_path = "~/.config/noctalia/templates/hyprland/colors.conf"
+output_path = "~/.config/hypr/colors.conf"
 
-# User-defined templates
-# Add your custom templates below
-# Example:
-# [templates.myapp]
-# input_path = "~/.config/noctalia/templates/myapp.css"
-# output_path = "~/.config/myapp/theme.css"
-# post_hook = "myapp --reload-theme"
+[templates.tmux]
+input_path = "~/.config/noctalia/templates/tmux/colors.conf"
+output_path = "~/.config/tmux/colors.conf"
 
-# Remove this section and add your own templates
-#[templates.placeholder]
-#input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/noctalia.json"
-#output_path = "/home/sudobytemebaby/.cache/noctalia/placeholder.json"
+[templates.foot]
+input_path = "~/.config/noctalia/templates/foot/colors.ini"
+output_path = "~/.config/foot/colors.ini"
 
+[templates.yazi]
+input_path = "~/.config/noctalia/templates/yazi/theme.toml"
+output_path = "~/.config/yazi/theme.toml"

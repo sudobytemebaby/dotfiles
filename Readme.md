@@ -4,22 +4,60 @@
 
 **Warning**: This guide involves disk partitioning and encryption. Double-check every command before running it. Data loss is permanent!
 
+> **Already have a base Arch install and just want this setup rolled out?** Jump to [Automated setup scripts](#automated-setup-scripts). The annotated package list lives in [PACKAGES.md](./PACKAGES.md).
+
 ---
 
 ## Table of Contents
 
-1. [Pre-Installation Setup](#pre-installation-setup)
-2. [Disk Encryption & Partitioning](#disk-encryption--partitioning)
-3. [Btrfs Subvolume Setup](#btrfs-subvolume-setup)
-4. [Base System Installation](#base-system-installation)
-5. [System Configuration](#system-configuration)
-6. [Bootloader Setup](#bootloader-setup)
-7. [User Management](#user-management)
-8. [First Boot & Package Installation](#first-boot--package-installation)
-9. [Snapshot Management with Snapper](#snapshot-management-with-snapper)
-10. [Performance Optimization](#performance-optimization)
-11. [Development Environment](#development-environment)
-12. [Additional Services](#additional-services)
+1. [Automated setup scripts](#automated-setup-scripts)
+2. [Pre-Installation Setup](#pre-installation-setup)
+3. [Disk Encryption & Partitioning](#disk-encryption--partitioning)
+4. [Btrfs Subvolume Setup](#btrfs-subvolume-setup)
+5. [Base System Installation](#base-system-installation)
+6. [System Configuration](#system-configuration)
+7. [Bootloader Setup](#bootloader-setup)
+8. [User Management](#user-management)
+9. [First Boot & Package Installation](#first-boot--package-installation)
+10. [Snapshot Management with Snapper](#snapshot-management-with-snapper)
+11. [Performance Optimization](#performance-optimization)
+12. [Development Environment](#development-environment)
+13. [Additional Services](#additional-services)
+14. [Essential Security Setup](#essential-security-setup)
+15. [System Maintenance](#system-maintenance)
+
+---
+
+## Automated setup scripts
+
+Once the base Arch system is in place (after step 25 below, or on any other Arch box that already has your user), the entire userland can be brought up with a single command:
+
+```bash
+sudo pacman -S --needed git
+cd ~ && git clone https://github.com/sudobytemebaby/dotfiles.git
+cd dotfiles
+./scripts/install.sh
+```
+
+Each step is broken down in [Step 29](#29-clone-dotfiles-and-run-the-install-scripts). The annotated package list lives in [PACKAGES.md](./PACKAGES.md).
+
+The scripts are idempotent — you can rerun them. Steps can also be invoked individually:
+
+```bash
+./scripts/install.sh paru          # only paru
+./scripts/install.sh packages      # only packages
+./scripts/install.sh stow          # only configs
+./scripts/install.sh services      # only systemd services
+./scripts/install.sh system        # only system tweaks
+```
+
+What to customise:
+
+- `scripts/pacman.txt` and `scripts/aur.txt` — package lists consumed by `02-packages.sh`
+- `scripts/04-services.sh` — services listed in the `SYSTEM_SERVICES` and `USER_SERVICES` arrays
+- `scripts/05-system.sh` — groups, udev, zram, iwd + dnsmasq backends for NetworkManager
+
+After a full run, **reboot** to apply group changes, zram, and the iwd backend.
 
 ---
 
@@ -63,7 +101,7 @@ ping -c 3 google.com
 ### 4. Sync System Clock
 
 ```bash
-timedatectl set-ntp true
+timedatectl set-ntp 1
 ```
 
 ---
@@ -123,9 +161,12 @@ cfdisk /dev/[YOUR_DISK]
 # DOUBLE CHECK YOUR PARTITION NUMBER!
 lsblk
 
-# Format the partition as LUKS encrypted
-# You'll be asked to create a password - REMEMBER THIS PASSWORD!
-cryptsetup luksFormat /dev/[YOUR_DISK]p2  # or /dev/[YOUR_DISK]2 for SATA
+# Format the partition as LUKS2 with PBKDF2.
+# Why --pbkdf pbkdf2: cryptsetup defaults to Argon2id, which older GRUB versions
+# can't unlock at all and current GRUB unlocks slowly. PBKDF2 is faster on the
+# unlock screen and works on every GRUB.
+# You'll be asked to create a password — REMEMBER IT!
+cryptsetup luksFormat --type luks2 --pbkdf pbkdf2 /dev/[YOUR_DISK]p2  # or /dev/[YOUR_DISK]2 for SATA
 ```
 
 **Type `YES` (in capitals) to confirm, then enter your encryption password twice.**
@@ -228,21 +269,22 @@ pacman -Sy archlinux-keyring
 pacstrap /mnt base base-devel \
     linux linux-firmware linux-headers \
     btrfs-progs snapper grub-btrfs \
-    amd-ucode networkmanager \
+    amd-ucode networkmanager iwd \
     grub efibootmgr os-prober \
-    vim nano git curl wget \
-    mesa vulkan-radeon libva-mesa-driver \
-    mesa-vdpau make cmake
+    vim git \
+    mesa vulkan-radeon libva-mesa-driver
 ```
 
 **What we're installing:**
 
-- Base system and kernel
+- Base system and kernel (`base`, `base-devel`, `linux*`)
 - Btrfs tools and snapshot utilities
-- AMD microcode and graphics drivers
-- Network management tools
-- Bootloader (GRUB)
-- Essential build tools and utilities
+- AMD microcode and graphics drivers (swap `amd-ucode` for `intel-ucode` on Intel)
+- Network management (`networkmanager` + `iwd` Wi-Fi backend)
+- Bootloader (`grub`, `efibootmgr`, `os-prober`)
+- A minimal in-chroot editor (`vim`) and `git` for cloning dotfiles after first boot
+
+> Everything else lives in `scripts/pacman.txt` / `scripts/aur.txt` and is installed by `scripts/install.sh` after first boot. See [PACKAGES.md](./PACKAGES.md) for the annotated list.
 
 ### 12. Generate Filesystem Table
 
@@ -275,21 +317,26 @@ ln -sf /usr/share/zoneinfo/Asia/Barnaul /etc/localtime
 
 hwclock --systohc
 
-# Setup locales (languages)
-echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
+# Pick locales (languages)
+tee -a /etc/locale.gen <<'EOF'
+en_US.UTF-8 UTF-8
+ru_RU.UTF-8 UTF-8
+EOF
 locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "LANG=en_US.UTF-8" | tee /etc/locale.conf
+
+# Console keymap (loaded before the LUKS prompt only if it's also in mkinitcpio HOOKS)
+echo "KEYMAP=us" | tee /etc/vconsole.conf
 ```
 
 ### 15. Set Hostname
 
 ```bash
 # Choose your computer's name (replace with what you want)
-echo "archlinux" > /etc/hostname
+echo "archlinux" | tee /etc/hostname
 
 # Setup hosts file
-cat >> /etc/hosts << 'EOF'
+tee -a /etc/hosts <<'EOF'
 127.0.0.1   localhost
 ::1         localhost
 127.0.1.1   archlinux.localdomain archlinux
@@ -401,15 +448,18 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 ### 22. Fix /tmp Cleanup Issue
 
-Because `/tmp` is its own subvolume, we need to tell the system to clean it on boot:
+Because `/tmp` is its own subvolume, we need to tell the system to clean it on boot. We also mask the default `tmp.mount` so systemd doesn't try to overlay tmpfs on top of our subvolume.
 
 ```bash
-# Create tmp cleanup configuration
+# Clean /tmp on every boot (since fstab mounts a subvolume there).
 mkdir -p /etc/tmpfiles.d
-cat > /etc/tmpfiles.d/tmp.conf << 'EOF'
+tee /etc/tmpfiles.d/tmp.conf <<'EOF'
 # Clean /tmp directory on every boot
 D! /tmp 1777 root root 0
 EOF
+
+# Stop systemd from mounting tmpfs over our btrfs /tmp.
+systemctl mask tmp.mount
 ```
 
 ---
@@ -469,7 +519,7 @@ reboot
 
 ## First Boot & Package Installation
 
-Congratulations! You've installed Arch with encryption. Now let's set up everything else.kj
+Congratulations! You've installed Arch with encryption. Now let's set up everything else.
 
 ### 26. Connect to WiFi (if needed)
 
@@ -508,39 +558,43 @@ sudo pacman -Syu
 # Install reflector
 sudo pacman -S reflector
 
-# Generate fast mirror list (adjust countries to your location)
-sudo reflector --country Germany,France,Netherlands --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+# Auto-pick the 20 freshest HTTPS mirrors and sort them by sync rate.
+# No --country: let the global mirror pool win on ping/rate.
+# Add e.g. --country DE,FR,NL if you want to constrain by region.
+sudo reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 
 # Enable automatic mirror updates
 sudo systemctl enable --now reflector.timer
 ```
 
-### 29. Run the Package Installation Script
+### 29. Clone dotfiles and run the install scripts
 
-**Now we'll install paru and all your packages using the installation script.**
-
-Create a file called `install-packages.sh`:
+From here on the remaining work is automated by the scripts in `scripts/`. For a higher-level overview see the **Automated setup scripts** section above and `PACKAGES.md`.
 
 ```bash
-nano install-packages.sh
+# Install git first if it isn't there yet
+sudo pacman -S --needed git
+
+# Clone dotfiles into your home directory
+cd ~
+git clone https://github.com/sudobytemebaby/dotfiles.git
+cd dotfiles
+
+# Run the full setup (paru + packages + stow + services + system tweaks)
+./scripts/install.sh
 ```
 
-Copy the installation script contents (see the separate artifact), save and exit (Ctrl+X, Y, Enter).
+**What `scripts/install.sh` does:**
 
-Make it executable and run it:
+1. `01-paru.sh` — installs paru-bin from the AUR
+2. `02-packages.sh` — `paru -S` for everything in `scripts/pacman.txt` and `scripts/aur.txt`
+3. `03-stow.sh` — symlinks every dotfiles directory into `$HOME` via stow
+4. `04-services.sh` — enables systemd services (NetworkManager, ly, docker, snapper timers, kanata, etc.)
+5. `05-system.sh` — adds you to groups (docker, input, uinput, libvirt), installs the kanata udev rule, configures zram, switches NetworkManager to iwd + dnsmasq, sets up tmpfiles for /tmp
 
-```bash
-chmod +x install-packages.sh
-./install-packages.sh
-```
+Individual steps can be run too: `./scripts/install.sh stow services`.
 
-**This will:**
-
-1. Install paru (AUR helper)
-2. Install ALL your packages using paru (both official repos and AUR)
-3. Show you progress as it goes
-
-**Note**: This will take a while.
+**Note**: the first run takes a while — AUR builds plus ~150 packages from the repos. When it finishes, `reboot` to apply group changes, zram, and iwd.
 
 ## Snapshot Management with Snapper
 
@@ -578,8 +632,14 @@ sudo mkdir /.snapshots
 # 6. Mount our proper @snapshots
 sudo mount /.snapshots
 
-# 7. Verify everything works
-sudo snapper -c root list
+# 7. Let your wheel-group user manage snapshots without sudo.
+sudo snapper -c root set-config "ALLOW_GROUPS=wheel"
+sudo snapper -c root set-config "SYNC_ACL=yes"
+sudo chown :wheel /.snapshots
+sudo chmod 750 /.snapshots
+
+# 8. Verify everything works
+snapper -c root list
 ```
 
 ### 32. Configure Snapper Settings
@@ -726,193 +786,234 @@ git config --global color.ui auto
 git config --global init.defaultBranch main
 ```
 
-### 41. Setup Dotfiles (if you have them)
+### 41. Setup Dotfiles (manual alternative)
+
+> Already handled by `scripts/03-stow.sh` if you ran `scripts/install.sh`. Use this only if you skipped the automated path.
 
 ```bash
 # Clone your dotfiles
 cd ~
-git clone git@github.com:yourusername/dotfiles.git
+git clone git@github.com:sudobytemebaby/dotfiles.git
 cd dotfiles
 
-# Use stow to symlink configs
-stow */
+# Use stow to symlink configs (skip the scripts/ directory).
+stow --target="$HOME" $(ls -d */ | grep -v '^scripts/$' | tr -d /)
 ```
 
 ---
 
 ## Additional Services
 
-### 42. Enable Docker
+### 42. Enable Docker (manual alternative)
+
+> Already handled by `scripts/04-services.sh` + `scripts/05-system.sh`.
 
 ```bash
 # Enable Docker service
 sudo systemctl enable --now docker
 
-# Add your user to docker group (so you don't need sudo)
-sudo usermod -aG docker $USER
+# Add your user to the docker group (so you don't need sudo)
+sudo usermod -aG docker "$USER"
 
-# You'll need to log out and back in for this to take effect
+# Log out and back in for the group change to take effect.
 ```
 
-### 43. Setup Display Manager (LY)
+### 43. Setup Display Manager (LY) (manual alternative)
+
+> Already handled by `scripts/04-services.sh`.
 
 ```bash
-# Enable LY display manager
 sudo systemctl enable ly.service
 ```
 
-### 44. Configure Kanata (Keyboard Remapping)
+### 44. Configure Kanata (Keyboard Remapping) (manual alternative)
+
+> Already handled by `scripts/04-services.sh` + `scripts/05-system.sh`.
 
 ```bash
-# Create necessary groups
+# Create the uinput group, add yourself to it.
 sudo groupadd -r uinput
-sudo usermod -aG input,uinput $USER
+sudo usermod -aG input,uinput "$USER"
 
-# Create udev rules
-sudo tee /etc/udev/rules.d/99-uinput.rules << 'EOF'
+# udev rule that exposes /dev/uinput to the uinput group.
+sudo tee /etc/udev/rules.d/99-uinput.rules <<'EOF'
 KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"
 EOF
-
-# Apply udev changes
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 sudo modprobe uinput
 
-# Make uinput load on boot
+# Make uinput load on every boot.
 echo "uinput" | sudo tee /etc/modules-load.d/uinput.conf
 
-# Enable kanata service (stowed from dotfiles)
-systemctl --user enable kanata
+# Enable the user service shipped from dotfiles.
+systemctl --user enable --now kanata.service
 ```
 
 ### 45. Enabling Xray (Proxy)
 
 ```bash
-# Create config file
+# Drop your xray config in here as ~/.config/xray/xsn.json
+# (the user unit shipped in dotfiles points at that exact path).
 mkdir -p ~/.config/xray
 
-add [configname].json into xray directory
-
-# Enabling xray service (stowed from dotfiles)
-systemctl --user enable xray
+# Then enable the user service stowed from dotfiles.
+systemctl --user enable --now xray.service
 ```
 
-### 46. Enabling Battery notification timer
+### 46. NetworkManager backends: iwd + dnsmasq (manual alternative)
+
+> Already handled by `scripts/05-system.sh`.
+
+Two drop-ins under `/etc/NetworkManager/conf.d/`:
+
+- **iwd** as the Wi-Fi backend (replaces `wpa_supplicant`).
+- **dnsmasq** as the DNS backend — NetworkManager spawns a local caching resolver on `127.0.0.1`, which gives faster repeat lookups and per-connection split DNS.
 
 ```bash
-# Enabling notification service
-systemctl --user enable battery-notify.timer
-systemctl --user start battery-notify.timer
-
-# Check if it's actually work
-systemctl --user status battery-notify.timer
-systemctl --user list-timers battery-notify.timer
-```
-
-### 47. Setting up IWD as wifi
-
-```bash
-# Create NetworkManager config directory if it doesn't exist
 sudo mkdir -p /etc/NetworkManager/conf.d
 
-# Create the iwd backend config
-sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf << 'EOF'
+# Wi-Fi backend → iwd
+sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf <<'EOF'
 [device]
 wifi.backend=iwd
 EOF
+
+# DNS backend → dnsmasq (local caching resolver)
+sudo tee /etc/NetworkManager/conf.d/dns.conf <<'EOF'
+[main]
+dns=dnsmasq
+EOF
+
+# Reload NetworkManager to pick the new backends up.
+sudo systemctl restart NetworkManager
 ```
 
-Do not enable `iwd.service` or manually configure iwd. NetworkManager will start and manage it itself. Reboot the system.
+Do not enable `iwd.service` or `dnsmasq.service` directly — NetworkManager starts and manages both itself. Reboot afterwards if anything looks off.
 
-**One thing to watch out for:** If you had any saved WiFi connections in NetworkManager, they should automatically migrate over. But if something seems weird, you might need to reconnect to your networks once. NetworkManager stores the passwords and just hands them to iwd now instead of wpa_supplicant.
+**Heads up:** existing saved Wi-Fi connections in NetworkManager carry over automatically. If something glitches, reconnect once — NetworkManager keeps the passwords and just hands them to iwd now.
+
+### 47. Printers and scanners
+
+> Mostly handled by `scripts/04-services.sh` (enables `cups.socket` + `avahi-daemon.service`) and `scripts/05-system.sh` (adds you to `lp` and `scanner`). The `nsswitch.conf` edit below is the only manual bit.
+
+If you skipped the scripts, here's the manual sequence:
+
+```bash
+# Enable printing. cups.socket is socket-activated — it only spawns cupsd
+# when something actually hits port 631, so there's no idle daemon.
+sudo systemctl enable --now cups.socket
+
+# Enable mDNS/DNS-SD so cups can auto-discover IPP printers on the LAN.
+sudo systemctl enable --now avahi-daemon.service
+
+# Allow your user to manage print queues and use the scanner.
+sudo usermod -aG lp,scanner "$USER"
+```
+
+**Manual step (required even after running the scripts):** make `*.local` Bonjour hostnames resolve via mDNS. Edit the `hosts:` line in `/etc/nsswitch.conf`:
+
+```bash
+sudoedit /etc/nsswitch.conf
+```
+
+Change the `hosts:` line to:
+
+```
+hosts: mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
+```
+
+`mdns_minimal [NOTFOUND=return]` must sit **before** `dns` and **after** `mymachines`. `[NOTFOUND=return]` tells NSS "if mdns can't resolve a `.local` name, stop here" — otherwise the lookup falls through to DNS, which slowly returns NXDOMAIN.
+
+After this, modern **IPP Everywhere** printers (basically anything sold since ~2015) appear in `system-config-printer` automatically — no driver needed. For older / non-IPP printers, install a brand-specific driver:
+
+- HP: `hplip` (large — ~200 MB; only worth it if you actually have HP)
+- Epson: `epson-inkjet-printer-escpr` (AUR)
+- Brother laser: `brlaser` (AUR)
+- Samsung SPL: `splix`
+
+To scan, plug the scanner in and launch `simple-scan`. SANE auto-detects most USB and network scanners — no further configuration needed.
 
 ### 48. Setting up Plymouth with a custom theme
 
 ```bash
-# Installing plymouth package
+# Install plymouth.
 sudo pacman -S plymouth
 
-# Adding plymouth to mkinicpio HOOKS
+# Add plymouth to the mkinitcpio HOOKS line, before encrypt.
 sudo nvim /etc/mkinitcpio.conf
+# HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block plymouth encrypt filesystems fsck)
 
-HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block plymouth encrypt filesystems fsck)
-
-# Edit GRUB config
+# Add `splash` to the kernel cmdline.
 sudo nvim /etc/default/grub
+# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet splash ..."
 
-# Add quiet splash thing here
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet splash ......."
-
-# Install theme
+# Install a theme.
 paru -S plymouth-theme-spinner-alt-git
 
-# Check available themes
+# List installed themes and apply the one you want.
 sudo plymouth-set-default-theme -l
-
-# Apply theme
 sudo plymouth-set-default-theme -R spinner_alt
 
-# Generate grub new config
+# Regenerate grub config and initramfs.
 sudo grub-mkconfig -o /boot/grub/grub.cfg
-
-# Just in case
 sudo mkinitcpio -P
 ```
 
 ### 49. Grub resolution fix
 
-Basically your grub can be look like it's resolution is crap. It probably is. If that's the case, we can fix it.
+Your GRUB menu can look low-res by default. To fix it:
 
 ```bash
-# Edit grub config using your comfortable editor
+# Edit the grub config with your editor of choice.
 sudo nvim /etc/default/grub
 ```
 
-You need this line:
+Set:
 
 ```bash
-# Change this resolution for whatever you're like or keep auto if it works for you.
+# Pick an explicit resolution, or leave 'auto' if it works for you.
 GRUB_GFXMODE=auto
 ```
 
-**Or you can also make font bigger or even change the font itself if you wish.**
+**You can also bump the font size (or swap fonts entirely):**
 
 ```bash
-# Find a font you actually lik
+# Pick a font you like.
 ls /usr/share/fonts/TTF/
 
-# Convert the font to GRUB's format. We'll use a tool called `grub-mkfont`. Let's say you want like 24 size
+# Convert it to GRUB's pf2 format at size 24 (try 32, 36 — whatever feels right).
 sudo grub-mkfont -s 24 -o /boot/grub/fonts/[YOUR_FONT]24.pf2 /usr/share/fonts/TTF/[YOUR_FONT].ttf
-
 ```
 
-- `-s 24` means size 24 (you can try 32, 36, whatever you fancy)
-- `-o /boot/grub/fonts/[YOUR_FONT]24.pf2` is where it'll save the new font
+- `-s 24` — font size
+- `-o /boot/grub/fonts/[YOUR_FONT]24.pf2` — where the new font is saved
 
-Then you should edit GRUB config to place this new font you generated.
+Wire the new font into GRUB:
 
 ```bash
 sudo nvim /etc/default/grub
+# Add or modify:
+# GRUB_FONT=/boot/grub/fonts/[YOUR_FONT]24.pf2
 
-# Add or modify this line:
-GRUB_FONT=/boot/grub/fonts/[YOUR_FONT]24.pf2
-
-# Then we should gen our updated config
+# Regenerate the config and reboot.
 sudo grub-mkconfig -o /boot/grub/grub.cfg
-
-# And reboot
 reboot
 ```
 
 ## Essential Security Setup
 
-**IMPORTANT**: Your system is encrypted, which is great, but we need to add more layers of security.
+Your system is encrypted, which is great. The steps below add a few more layers.
+
+> `ufw` and `arch-audit` are already in [PACKAGES.md](./PACKAGES.md) and `scripts/pacman.txt`. `fail2ban` and `openssh` are not — install them ad-hoc if you need them.
 
 ### 50. Install Security Essentials
 
 ```bash
-# Install security packages
-sudo pacman -S ufw fail2ban arch-audit
+# ufw and arch-audit come from your package list. Add fail2ban / openssh
+# only if you actually need them.
+sudo pacman -S --needed ufw arch-audit
+# sudo pacman -S --needed fail2ban openssh
 ```
 
 ### 51. Setup Firewall (UFW)
@@ -944,7 +1045,7 @@ sudo ufw enable
 sudo ufw status verbose
 ```
 
-**Testing UFW:**
+**Inspecting UFW:**
 
 ```bash
 # List all rules
@@ -959,14 +1060,14 @@ sudo ufw disable
 
 ### 52. Harden SSH Configuration
 
-If you use SSH (especially if exposed to the internet):
+Only relevant if you actually run sshd (`openssh` is not installed by default).
 
 ```bash
 # Backup the original config
 sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
 
 # Edit SSH config
-sudo vim /etc/ssh/sshd_config
+sudoedit /etc/ssh/sshd_config
 ```
 
 **Add or modify these lines:**
@@ -995,34 +1096,33 @@ X11Forwarding no
 Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
 MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
 
-# Optional: Change default port (security through obscurity, but helps reduce noise)
+# Optional: Change default port (security through obscurity, but reduces log noise)
 # Port 2222
 
 # Optional: Limit which users can SSH
 # AllowUsers yourusername
 ```
 
-**Restart SSH to apply changes:**
+**Apply the changes:**
 
 ```bash
-sudo systemctl restart sshd
-
-# Verify config is valid
+# Validate the config first.
 sudo sshd -t
+
+# Restart sshd.
+sudo systemctl restart sshd
 ```
 
-**CRITICAL**: Test SSH access in a new terminal before closing your current session!
+**CRITICAL**: open a second SSH session and confirm it works before closing the current one.
 
 ### 53. Setup Fail2Ban
 
-Fail2Ban automatically bans IPs that show malicious signs (too many password failures, etc.)
+Fail2Ban automatically bans IPs that show malicious signs (too many password failures, etc.). Install `fail2ban` first if you didn't already.
 
 ```bash
-# Create local configuration
+# Create local override (don't edit jail.conf — it gets overwritten on update).
 sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-
-# Edit the config
-sudo vim /etc/fail2ban/jail.local
+sudoedit /etc/fail2ban/jail.local
 ```
 
 **Find and modify these sections:**
@@ -1055,13 +1155,13 @@ port = ssh
 ```bash
 sudo systemctl enable --now fail2ban
 
-# Check status
+# Status overview.
 sudo fail2ban-client status
 
-# Check SSH jail specifically
+# SSH jail specifically.
 sudo fail2ban-client status sshd
 
-# Unban an IP if you accidentally locked yourself out
+# Unban an IP if you accidentally locked yourself out.
 sudo fail2ban-client set sshd unbanip [IP_ADDRESS]
 ```
 
@@ -1069,49 +1169,48 @@ sudo fail2ban-client set sshd unbanip [IP_ADDRESS]
 
 ## System Maintenance
 
-Proper maintenance keeps your system running smoothly and prevents issues.
+A handful of timers and habits to keep the system tidy over time.
 
 ### 54. Install Maintenance Tools
 
 ```bash
-sudo pacman -S pacman-contrib pkgfile man-db man-pages tldr
+# pacman-contrib and tldr are already in scripts/pacman.txt.
+# Add the docs packages if you want offline man pages.
+sudo pacman -S --needed pkgfile man-db man-pages
 ```
 
 ### 55. Setup Automatic Pacman Cache Cleaning
 
-The package cache in `/var/cache/pacman/pkg/` can grow huge over time.
+The package cache in `/var/cache/pacman/pkg/` grows over time.
 
 ```bash
-# Check current cache size
+# Inspect current size.
 du -sh /var/cache/pacman/pkg/
 
-# Clean cache manually (keeps last 3 versions of each package)
+# Clean manually (keeps last 3 versions of each package).
 sudo paccache -r
 
-# Remove all uninstalled packages from cache
+# Drop everything for packages you no longer have installed.
 sudo paccache -ruk0
 ```
 
-**Automate cache cleaning:**
+**Automate it (handled by `scripts/04-services.sh` already):**
 
 ```bash
-# Enable the weekly timer to keep only last 3 versions
 sudo systemctl enable --now paccache.timer
-
-# Check when it will run next
 systemctl list-timers paccache.timer
 ```
 
 ### 56. Setup Journal Log Rotation
 
-Systemd journals can consume a lot of space.
+Systemd journals can grow unbounded.
 
 ```bash
-# Check current journal size
+# Inspect current size.
 journalctl --disk-usage
 
-# Configure journal size limits
-sudo vim /etc/systemd/journald.conf
+# Edit limits.
+sudoedit /etc/systemd/journald.conf
 ```
 
 **Modify these lines:**
@@ -1120,7 +1219,7 @@ sudo vim /etc/systemd/journald.conf
 [Journal]
 SystemMaxUse=500M
 SystemMaxFileSize=50M
-MaxRetentionSec=2week
+MaxRetentionSec=2weeks
 ```
 
 **Apply changes:**
@@ -1128,86 +1227,60 @@ MaxRetentionSec=2week
 ```bash
 sudo systemctl restart systemd-journald
 
-# Manually clean old logs if needed
+# Manually trim old logs if needed.
 sudo journalctl --vacuum-size=500M
 sudo journalctl --vacuum-time=2weeks
 ```
 
 ### 57. Setup Orphaned Package Cleanup
 
-Remove packages that were installed as dependencies but are no longer needed:
+Remove packages that were pulled in as dependencies but no longer have a parent.
 
 ```bash
-# List orphaned packages
+# List orphans (no output == nothing to do).
 pacman -Qtdq
 
-# Remove them
-sudo pacman -Rns $(pacman -Qtdq)
+# Remove them safely (handles the empty-list case).
+pacman -Qtdq | sudo pacman -Rns - 2>/dev/null || echo "no orphans"
 ```
 
 ### 58. Update Mirrorlist Regularly
 
-Keep your mirrors fast and up to date:
+Keep your mirrors fresh.
 
 ```bash
-# Reflector should already be set up from step 28
-# Verify it's running
+# reflector.timer was enabled in step 28; this just confirms it.
 systemctl status reflector.timer
-
-# Check when it will run next
 systemctl list-timers reflector.timer
 
-# Manually update mirrors now
-sudo reflector --country Germany,France,Netherlands --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+# Manual refresh.
+sudo reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 ```
 
 ### 59. Maintenance Checklist
 
 **Daily:**
 
-- ✓ Btrfs snapshots (snapper)
-- ✓ Security audit check
+- Btrfs snapshots (snapper)
+- Security audit check (`arch-audit`)
 
 **Weekly:**
 
-- ✓ Package cache cleanup
-- ✓ Journal log rotation
-- ✓ TRIM operation
-- ✓ Orphaned package removal
+- Package cache cleanup (`paccache.timer`)
+- Journal log rotation
+- TRIM (`fstrim.timer`, if you enable it)
+- Orphan removal
 
 **Monthly:**
 
-- ✓ Mirror list update
+- Mirror list refresh (`reflector.timer` does this automatically)
 
 ---
 
-## 60. Backup Strategy
+**That's it.** You now have a fully encrypted Arch Linux system with automatic snapshots, the userland from `scripts/install.sh`, and the full annotated package inventory in [PACKAGES.md](./PACKAGES.md).
 
-**CRITICAL**: Snapshots are NOT backups! They protect against mistakes but not hardware failure, theft, or catastrophic damage.
+Habits worth keeping:
 
-### Why You Need Backups
-
-Btrfs snapshots protect you from:
-
-- ✓ Accidental file deletion
-- ✓ Bad system updates
-- ✓ Configuration mistakes
-
-Snapshots do NOT protect you from:
-
-- ✗ Disk failure
-- ✗ Filesystem corruption
-- ✗ Physical damage (fire, water, theft)
-- ✗ Ransomware (sophisticated attacks)
-
----
-
-**That's it! You now have a fully encrypted Arch Linux system with automatic snapshots and all your development tools ready to go.**
-
-Remember to:
-
-- Create regular snapshots before major changes
-- Back up your encryption password somewhere safe
-- Test booting into snapshots from GRUB menu occasionally
-
-Enjoy your new system!
+- Take a manual snapshot before risky upgrades — `snapper -c root create -d "before X"`
+- Rerun `./scripts/install.sh` after editing `scripts/pacman.txt` / `scripts/aur.txt` to keep the system in sync
+- Boot into a snapshot from the GRUB menu now and then to make sure recovery actually works

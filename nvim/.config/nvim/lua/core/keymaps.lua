@@ -1,33 +1,33 @@
-local keymap = vim.keymap
+local map = vim.keymap.set
 
--- Moving highlighted stuff up and down
-keymap.set("v", "J", ":m '>+1<CR>gv=gv")
-keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+-- Move highlighted lines up/down in visual mode
+map("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
+map("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 
--- For quick scrolling with centering
-keymap.set("n", "<C-d>", "<C-d>zz")
-keymap.set("n", "<C-u>", "<C-u>zz")
+-- Half-page jumps keep the cursor centered
+map("n", "<C-d>", "<C-d>zz", { desc = "Half-page down (centered)" })
+map("n", "<C-u>", "<C-u>zz", { desc = "Half-page up (centered)" })
 
 -- Yank to system clipboard
-keymap.set("n", "<leader>y", '"+y')
-keymap.set("v", "<leader>y", '"+y')
-keymap.set("n", "<leader>Y", '"+Y')
+map({ "n", "v" }, "<leader>y", '"+y', { desc = "Yank to system clipboard" })
+map("n", "<leader>Y", '"+Y', { desc = "Yank line to system clipboard" })
 
--- Skill issue
-keymap.set("i", "jk", "<Esc>")
+-- Escape from insert mode without leaving home row
+map("i", "jk", "<Esc>", { desc = "Exit insert mode" })
 
--- Turns off Q key bc it's annoying
-keymap.set("n", "Q", "<nop>")
+-- Disable Ex mode
+map("n", "Q", "<nop>", { desc = "Disable Ex mode" })
 
--- Mass replace string in file
-keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
+-- Replace all occurrences of word under cursor
+map("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = "Replace word under cursor" })
 
--- Makes file executable (chmod +x)
-keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
+-- chmod +x current file
+map("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true, desc = "Make file executable" })
 
--- Oil.nvim
-keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open Parent Directory" })
+-- Open parent directory with oil.nvim
+map("n", "-", "<cmd>Oil<CR>", { desc = "Open parent directory" })
 
-keymap.set("n", "<leader>h", function()
+-- Toggle LSP inlay hints
+map("n", "<leader>h", function()
 	vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
-end)
+end, { desc = "Toggle inlay hints" })

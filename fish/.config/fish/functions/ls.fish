@@ -1,3 +1,3 @@
-function ls --wraps=eza --description 'List directory contents with eza'
-    eza --grid --icons --color=auto --all $argv
+function ls --wraps=eza --description 'List directory contents (eza)'
+    eza --grid --icons --git --color=auto --all $argv
 end

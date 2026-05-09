@@ -254,7 +254,7 @@ Legend:
 
 ## Databases
 
-- `rainfrog` — TUI for PostgreSQL
+- `dbgate-bin` `[AUR]` — cross-platform GUI database client (PostgreSQL, MySQL, SQL Server, SQLite, MongoDB, etc.)
 
 ## Keyboard
 

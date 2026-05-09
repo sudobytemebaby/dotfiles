@@ -2,6 +2,7 @@ auto-cpufreq
 bruno-bin
 claude-code
 cliamp
+dbgate-bin
 ffuf
 helium-browser-bin
 kanata-bin

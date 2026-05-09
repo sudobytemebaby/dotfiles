@@ -1,3 +1,35 @@
+-- LSP servers installed via mason. Per-server settings live in after/lsp/<name>.lua
+local mason_servers = {
+	"ts_ls",
+	"html",
+	"cssls",
+	"lua_ls",
+	"emmet_ls",
+	"tailwindcss",
+	"gopls",
+	"rust_analyzer",
+	"pyright",
+	"yamlls",
+}
+
+-- Servers using a system install (not managed by mason)
+local external_servers = {
+	"qmlls", -- ships with qt6-declarative
+}
+
+local tools = {
+	"prettier",
+	"stylua",
+	"eslint_d",
+
+	"gofumpt",
+	"goimports-reviser",
+	"golines",
+
+	"yamllint",
+	"yamlfmt",
+}
+
 return {
 	"williamboman/mason.nvim",
 	dependencies = {
@@ -6,11 +38,7 @@ return {
 		"neovim/nvim-lspconfig",
 	},
 	config = function()
-		local mason = require("mason")
-		local mason_lspconfig = require("mason-lspconfig")
-		local mason_tool_installer = require("mason-tool-installer")
-
-		mason.setup({
+		require("mason").setup({
 			ui = {
 				icons = {
 					package_installed = "✓",
@@ -21,50 +49,15 @@ return {
 			},
 		})
 
-		mason_lspconfig.setup({
-			ensure_installed = {
-				"ts_ls",
-				"html",
-				"cssls",
-				"lua_ls",
-				"emmet_ls",
-				"tailwindcss",
-				"gopls",
-				"rust_analyzer",
-				"pyright",
-				"yamlls",
-			},
-			automatic_installation = true,
+		require("mason-lspconfig").setup({
+			ensure_installed = mason_servers,
 		})
 
-		mason_tool_installer.setup({
-			ensure_installed = {
-				"prettier",
-				"stylua",
-				"eslint_d",
-
-				"gofumpt",
-				"goimports-reviser",
-				"golines",
-
-				"yamllint",
-				"yamlfmt",
-			},
+		require("mason-tool-installer").setup({
+			ensure_installed = tools,
 		})
 
-		-- Enable LSP servers (configs live in after/lsp/<server>.lua)
-		vim.lsp.enable({
-			"ts_ls",
-			"html",
-			"cssls",
-			"lua_ls",
-			"emmet_ls",
-			"tailwindcss",
-			"gopls",
-			"rust_analyzer",
-			"pyright",
-			"yamlls",
-			"qmlls", -- not mason-managed, uses system Qt6 install
-		})
+		local servers = vim.list_extend(vim.deepcopy(mason_servers), external_servers)
+		vim.lsp.enable(servers)
 	end,
 }

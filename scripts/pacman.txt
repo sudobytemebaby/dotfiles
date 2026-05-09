@@ -112,7 +112,6 @@ python-pylast
 qbittorrent
 qemu-desktop
 radeontop
-rainfrog
 reflector
 ripgrep
 rsync

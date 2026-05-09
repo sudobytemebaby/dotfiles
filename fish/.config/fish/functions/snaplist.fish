@@ -1,5 +1,3 @@
-# Listing all existing snapshots
-function snaplist 
-  sudo snapper -c root list
+function snaplist --description 'List all snapshots from the root snapper config'
+    sudo snapper -c root list
 end
-

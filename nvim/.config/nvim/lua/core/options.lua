@@ -1,48 +1,37 @@
 local opt = vim.opt
 
--- Line numbers + relative line numbers always enabled
+-- Numbers
 opt.nu = true
 opt.relativenumber = true
 
--- Tab settings:
-opt.tabstop = 2 -- Tab width in spaces
-opt.softtabstop = 2 -- Number of spaces when pressing Tab
-opt.shiftwidth = 2 -- Number of spaces for indentation when using >> | <<
-opt.expandtab = true -- Replace tabs with spaces
-
--- Smart indentation: enabled
+-- Indentation: 2-space soft tabs
+opt.tabstop = 2
+opt.softtabstop = 2
+opt.shiftwidth = 2
+opt.expandtab = true
 opt.smartindent = true
 
--- Line wrap: disabled
 opt.wrap = false
 
--- Disable swap file creation
+-- No swap or backup files; persistent undo instead
 opt.swapfile = false
-
--- Disable backups
 opt.backup = false
+opt.undodir = vim.fn.stdpath("state") .. "/undo"
+opt.undofile = true
 
--- Settings for persistent undo function:
-opt.undodir = os.getenv("HOME") .. "/.vim/undodir" -- Directory for storing undo history
-opt.undofile = true -- Enable saving undo history between sessions
-
--- Disable highlighting of all search results
+-- Search
 opt.hlsearch = false
-
--- Enable incremental search (as you type)
 opt.incsearch = true
 
--- Enable 24-bit color support in terminal
 opt.termguicolors = true
 
--- Set minimum 8 lines of visibility above/below when scrolling
+-- Keep cursor away from screen edges when scrolling
 opt.scrolloff = 8
 
--- Enable sign column on the left of line numbers (for LSP, git, etc.)
+-- Reserve sign column so layout doesn't jump when LSP/git signs appear
 opt.signcolumn = "yes"
 
--- Set update time in ms (affects responsiveness)
+-- Faster CursorHold (used by LSP, gitsigns, etc.)
 opt.updatetime = 50
 
--- Disable vertical line for text width limit
 opt.colorcolumn = "0"

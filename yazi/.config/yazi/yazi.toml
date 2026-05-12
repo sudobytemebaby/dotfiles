@@ -1,241 +1,288 @@
-# A TOML linter such as https://taplo.tamasfe.dev/ can use this schema to validate your config.
-# If you encounter any issues, please make an issue at https://github.com/yazi-rs/schemas.
-"$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
+#:schema https://yazi-rs.github.io/schemas/yazi.json
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  Manager — file list, sorting, panel layout
+# ─────────────────────────────────────────────────────────────────────────────
 [mgr]
-ratio          = [ 1, 4, 3 ]
-sort_by        = "alphabetical"
-sort_sensitive = false
-sort_reverse 	 = false
-sort_dir_first = true
-sort_translit  = false
-linemode       = "none"
-show_hidden    = false
-show_symlink   = true
-scrolloff      = 5
+ratio          = [ 1, 4, 3 ]          # parent : current : preview column widths
+sort_by        = "alphabetical"       # none | mtime | btime | extension | alphabetical | natural | size | random
+sort_sensitive = false                # case-sensitive sort
+sort_reverse   = false                # reverse sort order
+sort_dir_first = true                 # folders before files
+sort_translit  = false                # transliterate names before sort (e.g. ä → a)
+linemode       = "none"               # extra info column: none | size | btime | mtime | permissions | owner
+show_hidden    = false                # show dotfiles
+show_symlink   = true                 # append symlink target to name
+scrolloff      = 5                    # keep N rows of context around cursor
 mouse_events   = [ "click", "scroll" ]
-title_format   = "Yazi: {cwd}"
+title_format   = "Yazi: {cwd}"        # terminal window title
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Preview — image rendering & code preview
+# ─────────────────────────────────────────────────────────────────────────────
 [preview]
-wrap            = "no"
+wrap            = "no"                # wrap long lines in code preview: no | yes
 tab_size        = 2
 max_width       = 600
 max_height      = 900
-cache_dir       = ""
-image_delay     = 30
-image_filter    = "triangle"
+cache_dir       = ""                  # empty = $XDG_CACHE_HOME/yazi (from env)
+image_delay     = 30                  # ms to wait before rendering (debounce on scroll)
+image_filter    = "triangle"          # nearest | triangle | catmull-rom | gaussian | lanczos3
 image_quality   = 75
 ueberzug_scale  = 1
 ueberzug_offset = [ 0, 0, 0, 0 ]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Openers — command definitions used by the `[open]` rules below.
+#  `%s`  = selected files     `%s1` = first selected     `%d` / `%d1` = dirs
+#  `block = true` runs in foreground (terminal locked, e.g. TUI editors)
+#  `orphan = true` detaches process from yazi (GUI apps)
+#  `run` strings are executed by `sh`, so ${VAR}, ${VAR:-fallback}, "$@" work.
+# ─────────────────────────────────────────────────────────────────────────────
 [opener]
 edit = [
-  { run = 'nvim "$@"', desc = "Neovim", for = "unix", block = true },
-  { run = "code %s",    desc = "code",    for = "windows", orphan = true },
-  { run = "code -w %s", desc = "code (block)", for = "windows", block = true },
-]
-play = [
-	{ run = "xdg-open %s1",                desc = "Play", for = "linux" },
-	{ run = "open %s",                     desc = "Play", for = "macos" },
-	{ run = 'start "" %s1', orphan = true, desc = "Play", for = "windows" },
-	{ run = "termux-open %s1",             desc = "Play", for = "android" },
-	{ run = "mediainfo %s1; echo 'Press enter to exit'; read _", block = true, desc = "Show media info", for = "unix" },
-	{ run = "mediainfo %s1 & pause", block = true, desc = "Show media info", for = "windows" },
+	{ run = '${EDITOR:-nvim} "$@"',                 desc = "$EDITOR",       for = "unix",    block = true },
+	{ run = "code %s",                              desc = "VSCode",        for = "windows", orphan = true },
+	{ run = "code -w %s",                           desc = "VSCode (wait)", for = "windows", block = true },
 ]
 open = [
-	{ run = "xdg-open %s1",    desc = "Open", for = "linux" },
-	{ run = "open %s",         desc = "Open", for = "macos" },
-	{ run = 'start "" %s1',    desc = "Open", for = "windows", orphan = true },
-	{ run = "termux-open %s1", desc = "Open", for = "android" },
+	{ run = "xdg-open %s1",                         desc = "Open", for = "linux" },
+	{ run = "open %s",                              desc = "Open", for = "macos" },
+	{ run = 'start "" %s1',                         desc = "Open", for = "windows", orphan = true },
+	{ run = "termux-open %s1",                      desc = "Open", for = "android" },
+]
+play = [
+	{ run = "xdg-open %s1",                         desc = "Play", for = "linux",   orphan = true },
+	{ run = "open %s",                              desc = "Play", for = "macos" },
+	{ run = 'start "" %s1',                         desc = "Play", for = "windows", orphan = true },
+	{ run = "termux-open %s1",                      desc = "Play", for = "android" },
+	{ run = "mediainfo %s1; echo 'Press enter to exit'; read _", desc = "Media info", for = "unix",    block = true },
+	{ run = "mediainfo %s1 & pause",                             desc = "Media info", for = "windows", block = true },
 ]
 reveal = [
-	{ run = "xdg-open %d1",         desc = "Reveal", for = "linux" },
-	{ run = "open -R %s1",          desc = "Reveal", for = "macos" },
-	{ run = "explorer /select,%s1", desc = "Reveal", for = "windows", orphan = true },
-	{ run = "termux-open %d1",      desc = "Reveal", for = "android" },
+	{ run = "xdg-open %d1",                         desc = "Reveal", for = "linux" },
+	{ run = "open -R %s1",                          desc = "Reveal", for = "macos" },
+	{ run = "explorer /select,%s1",                 desc = "Reveal", for = "windows", orphan = true },
+	{ run = "termux-open %d1",                      desc = "Reveal", for = "android" },
 	{ run = "clear; exiftool %s1; echo 'Press enter to exit'; read _", desc = "Show EXIF", for = "unix", block = true },
 ]
 extract = [
-	{ run = "ya pub extract --list %s", desc = "Extract here" },
+	{ run = "ya pub extract --list %s",             desc = "Extract here" },
 ]
 download = [
-	{ run = "ya emit download --open %S", desc = "Download and open" },
-	{ run = "ya emit download %S",        desc = "Download" },
+	{ run = "ya emit download --open %S",           desc = "Download and open" },
+	{ run = "ya emit download %S",                  desc = "Download" },
 ]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Open rules — map file types to openers above.
+#  First match wins. `Enter` runs the first `use`, `o` opens the picker.
+# ─────────────────────────────────────────────────────────────────────────────
 [open]
 rules = [
-	# Folder
-	{ url = "*/", use = [ "edit", "open", "reveal" ] },
-	# Text
-	{ mime = "text/*", use = [ "edit", "reveal" ] },
-	# Image
-	{ mime = "image/*", use = [ "open", "reveal" ] },
-	# Media
-	{ mime = "{audio,video}/*", use = [ "play", "reveal" ] },
-	# Archive
+	# Folders
+	{ url = "*/",                       use = [ "edit", "open", "reveal" ] },
+
+	# Text & code
+	{ mime = "text/*",                  use = [ "edit", "reveal" ] },
+	{ mime = "application/{json,ndjson,javascript,wine-extension-ini}", use = [ "edit", "reveal" ] },
+
+	# Images
+	{ mime = "image/*",                 use = [ "open", "reveal" ] },
+
+	# Audio & video
+	{ mime = "{audio,video}/*",         use = [ "play", "reveal" ] },
+
+	# Archives
 	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "reveal" ] },
-	# JSON
-	{ mime = "application/{json,ndjson}", use = [ "edit", "reveal" ] },
-	{ mime = "*/javascript", use = [ "edit", "reveal" ] },
-	# Empty file
-	{ mime = "inode/empty", use = [ "edit", "reveal" ] },
-	# Virtual file system
-	{ mime = "vfs/{absent,stale}", use = "download" },
-	# Fallback
-	{ url = "*", use = [ "open", "reveal" ] },
+
+	# Empty files — treat as editable
+	{ mime = "inode/empty",             use = [ "edit", "reveal" ] },
+
+	# Virtual file system (remote/archive contents)
+	{ mime = "vfs/{absent,stale}",      use = "download" },
+
+	# Fallback for everything else
+	{ url = "*",                        use = [ "open", "reveal" ] },
 ]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Tasks — background worker pools and limits
+# ─────────────────────────────────────────────────────────────────────────────
 [tasks]
-micro_workers    = 10
-macro_workers    = 10
-bizarre_retry    = 3
-image_alloc      = 536870912  # 512MB
-image_bound      = [ 10000, 10000 ]
+file_workers     = 3                  # copy / move / delete
+plugin_workers   = 5                  # plugin invocations
+fetch_workers    = 5                  # fetchers (mime detection, git status, …)
+preload_workers  = 2                  # preloaders (image/pdf/font caches)
+process_workers  = 5                  # external processes
+bizarre_retry    = 3                  # retries on weird I/O errors
+image_alloc      = 536870912          # 512 MiB cap for decoded image RAM
+image_bound      = [ 10000, 10000 ]   # max image dimensions before downscale
 suppress_preload = false
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Plugins — fetchers / spotters / preloaders / previewers
+#
+#  fetchers   : run on hover/visible items, populate file metadata
+#               (`group` lets multiple plugins occupy the same logical slot;
+#                e.g. all mime detectors share group = "mime")
+#  spotters   : compact metadata panel in the preview column
+#  preloaders : background cache builders (images, PDFs, fonts)
+#  previewers : render the preview pane for the hovered file
+# ─────────────────────────────────────────────────────────────────────────────
 [plugin]
 fetchers = [
-	# Mimetype
-	{ id = "mime", url = "*/",         run = "mime.dir", prio = "high" },
-	{ id = "mime", url = "local://*",  run = "mime.local", prio = "high" },
-	{ id = "mime", url = "remote://*", run = "mime.remote", prio = "high" },
-]
-spotters = [
-	{ url = "*/", run = "folder" },
-	# Code
-	{ mime = "text/*", run = "code" },
-	{ mime = "application/{mbox,javascript,wine-extension-ini}", run = "code" },
-	# Image
-	{ mime = "image/{avif,hei?,jxl}", run = "magick" },
-	{ mime = "image/svg+xml", run = "svg" },
-	{ mime = "image/*", run = "image" },
-	# Video
-	{ mime = "video/*", run = "video" },
-	# Virtual file system
-	{ mime = "vfs/*", run = "vfs" },
-	# Error
-	{ mime = "null/*", run = "null" },
-	# Fallback
-	{ url = "*", run = "file" },
-]
-preloaders = [
-	# Image
-	{ mime = "image/{avif,hei?,jxl}", run = "magick" },
-	{ mime = "image/svg+xml", run = "svg" },
-	{ mime = "image/*", run = "image" },
-	# Video
-	{ mime = "video/*", run = "video" },
-	# PDF
-	{ mime = "application/pdf", run = "pdf" },
-	# Font
-	{ mime = "font/*", run = "font" },
-	{ mime = "application/ms-opentype", run = "font" },
-]
-previewers = [
-	{ url = "*/", run = "folder" },
-	# Code
-	{ mime = "text/*", run = "code" },
-	{ mime = "application/{mbox,javascript,wine-extension-ini}", run = "code" },
-	# JSON
-	{ mime = "application/{json,ndjson}", run = "json" },
-	# Image
-	{ mime = "image/{avif,hei?,jxl}", run = "magick" },
-	{ mime = "image/svg+xml", run = "svg" },
-	{ mime = "image/*", run = "image" },
-	# Video
-	{ mime = "video/*", run = "video" },
-	# PDF
-	{ mime = "application/pdf", run = "pdf" },
-	# Archive
-	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", run = "archive" },
-	{ mime = "application/{debian*-package,redhat-package-manager,rpm,android.package-archive}", run = "archive" },
-	{ url = "*.{AppImage,appimage}", run = "archive" },
-	# Virtual Disk / Disk Image
-	{ mime = "application/{iso9660-image,qemu-disk,ms-wim,apple-diskimage}", run = "archive" },
-	{ mime = "application/virtualbox-{vhd,vhdx}", run = "archive" },
-	{ url = "*.{img,fat,ext,ext2,ext3,ext4,squashfs,ntfs,hfs,hfsx}", run = "archive" },
-	# Font
-	{ mime = "font/*", run = "font" },
-	{ mime = "application/ms-opentype", run = "font" },
-	# Empty file
-	{ mime = "inode/empty", run = "empty" },
-	# Virtual file system
-	{ mime = "vfs/*", run = "vfs" },
-	# Error
-	{ mime = "null/*", run = "null" },
-	# Fallback
-	{ url = "*", run = "file" },
+	# MIME-type detection — required by all the `mime = ...` rules above
+	{ url = "*/",         run = "mime.dir",    prio = "high", group = "mime" },
+	{ url = "local://*",  run = "mime.local",  prio = "high", group = "mime" },
+	{ url = "remote://*", run = "mime.remote", prio = "high", group = "mime" },
 ]
 
+spotters = [
+	{ url = "*/",                                                run = "folder" },
+	# Code
+	{ mime = "text/*",                                           run = "code" },
+	{ mime = "application/{mbox,javascript,wine-extension-ini}", run = "code" },
+	# Images
+	{ mime = "image/{avif,hei?,jxl}",                            run = "magick" },
+	{ mime = "image/svg+xml",                                    run = "svg" },
+	{ mime = "image/*",                                          run = "image" },
+	# Video
+	{ mime = "video/*",                                          run = "video" },
+	# Virtual FS / errors
+	{ mime = "vfs/*",                                            run = "vfs" },
+	{ mime = "null/*",                                           run = "null" },
+	# Fallback
+	{ url = "*",                                                 run = "file" },
+]
+
+preloaders = [
+	# Images
+	{ mime = "image/{avif,hei?,jxl}",                            run = "magick" },
+	{ mime = "image/svg+xml",                                    run = "svg" },
+	{ mime = "image/*",                                          run = "image" },
+	# Video
+	{ mime = "video/*",                                          run = "video" },
+	# PDF
+	{ mime = "application/pdf",                                  run = "pdf" },
+	# Fonts
+	{ mime = "font/*",                                           run = "font" },
+	{ mime = "application/ms-opentype",                          run = "font" },
+]
+
+previewers = [
+	{ url = "*/",                                                run = "folder" },
+	# Code
+	{ mime = "text/*",                                           run = "code" },
+	{ mime = "application/{mbox,javascript,wine-extension-ini}", run = "code" },
+	# JSON
+	{ mime = "application/{json,ndjson}",                        run = "json" },
+	# Images
+	{ mime = "image/{avif,hei?,jxl}",                            run = "magick" },
+	{ mime = "image/svg+xml",                                    run = "svg" },
+	{ mime = "image/*",                                          run = "image" },
+	# Video
+	{ mime = "video/*",                                          run = "video" },
+	# PDF
+	{ mime = "application/pdf",                                  run = "pdf" },
+	# Archives
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", run = "archive" },
+	{ mime = "application/{debian*-package,redhat-package-manager,rpm,android.package-archive}",            run = "archive" },
+	{ url  = "*.{AppImage,appimage}",                            run = "archive" },
+	# Disk images
+	{ mime = "application/{iso9660-image,qemu-disk,ms-wim,apple-diskimage}", run = "archive" },
+	{ mime = "application/virtualbox-{vhd,vhdx}",                            run = "archive" },
+	{ url  = "*.{img,fat,ext,ext2,ext3,ext4,squashfs,ntfs,hfs,hfsx}",        run = "archive" },
+	# Fonts
+	{ mime = "font/*",                                           run = "font" },
+	{ mime = "application/ms-opentype",                          run = "font" },
+	# Empty / virtual / errors
+	{ mime = "inode/empty",                                      run = "empty" },
+	{ mime = "vfs/*",                                            run = "vfs" },
+	{ mime = "null/*",                                           run = "null" },
+	# Fallback
+	{ url = "*",                                                 run = "file" },
+]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Input prompts — placement & titles
+#  offset = [ x, y, width, height ]   origin = top-center | hovered | center | …
+# ─────────────────────────────────────────────────────────────────────────────
 [input]
 cursor_blink = false
 
-# cd
-cd_title  = "Change directory:"
-cd_origin = "top-center"
-cd_offset = [ 0, 2, 50, 3 ]
+cd_title      = "Change directory:"
+cd_origin     = "top-center"
+cd_offset     = [ 0, 2, 50, 3 ]
 
-# create
 create_title  = [ "Create:", "Create (dir):" ]
 create_origin = "top-center"
 create_offset = [ 0, 2, 50, 3 ]
 
-# rename
 rename_title  = "Rename:"
 rename_origin = "hovered"
 rename_offset = [ 0, 1, 50, 3 ]
 
-# filter
 filter_title  = "Filter:"
 filter_origin = "top-center"
 filter_offset = [ 0, 2, 50, 3 ]
 
-# find
-find_title  = [ "Find next:", "Find previous:" ]
-find_origin = "top-center"
-find_offset = [ 0, 2, 50, 3 ]
+find_title    = [ "Find next:", "Find previous:" ]
+find_origin   = "top-center"
+find_offset   = [ 0, 2, 50, 3 ]
 
-# search
 search_title  = "Search via {n}:"
 search_origin = "top-center"
 search_offset = [ 0, 2, 50, 3 ]
 
-# shell
-shell_title  = [ "Shell:", "Shell (block):" ]
-shell_origin = "top-center"
-shell_offset = [ 0, 2, 50, 3 ]
+shell_title   = [ "Shell:", "Shell (block):" ]
+shell_origin  = "top-center"
+shell_offset  = [ 0, 2, 50, 3 ]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Confirm dialogs
+# ─────────────────────────────────────────────────────────────────────────────
 [confirm]
-# trash
-trash_title 	= "Trash {n} selected file{s}?"
-trash_origin	= "center"
-trash_offset	= [ 0, 0, 70, 20 ]
+trash_title      = "Trash {n} selected file{s}?"
+trash_origin     = "center"
+trash_offset     = [ 0, 0, 70, 20 ]
 
-# delete
-delete_title 	= "Permanently delete {n} selected file{s}?"
-delete_origin	= "center"
-delete_offset	= [ 0, 0, 70, 20 ]
+delete_title     = "Permanently delete {n} selected file{s}?"
+delete_origin    = "center"
+delete_offset    = [ 0, 0, 70, 20 ]
 
-# overwrite
 overwrite_title  = "Overwrite file?"
 overwrite_body   = "Will overwrite the following file:"
 overwrite_origin = "center"
 overwrite_offset = [ 0, 0, 50, 15 ]
 
-# quit
-quit_title  = "Quit?"
-quit_body   = "The following tasks are still running, are you sure you want to quit?"
-quit_origin = "center"
-quit_offset = [ 0, 0, 50, 15 ]
+quit_title       = "Quit?"
+quit_body        = "The following tasks are still running, are you sure you want to quit?"
+quit_origin      = "center"
+quit_offset      = [ 0, 0, 50, 15 ]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Pickers (opener menu)
+# ─────────────────────────────────────────────────────────────────────────────
 [pick]
 open_title  = "Open with:"
 open_origin = "hovered"
 open_offset = [ 0, 1, 50, 7 ]
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Which-key popup
+# ─────────────────────────────────────────────────────────────────────────────
 [which]
-sort_by      	 = "none"
+sort_by        = "none"
 sort_sensitive = false
-sort_reverse 	 = false
+sort_reverse   = false
 sort_translit  = false

@@ -1,8 +1,8 @@
 [config]
 
 [templates.hyprland]
-input_path = "~/.config/noctalia/templates/hyprland/colors.conf"
-output_path = "~/.config/hypr/colors.conf"
+input_path = "~/.config/noctalia/templates/hyprland/colors.lua"
+output_path = "~/.config/hypr/lua/colors.lua"
 
 [templates.tmux]
 input_path = "~/.config/noctalia/templates/tmux/colors.conf"

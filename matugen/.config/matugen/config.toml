@@ -3,8 +3,8 @@ templates_dir = "~/.config/matugen/templates"
 
 # --- Hyprland ---
 [templates.hyprland]
-input_path = "~/.config/matugen/templates/hyprland/hyprland.conf"
-output_path = "~/.config/hypr/colors.conf"
+input_path = "~/.config/matugen/templates/hyprland/colors.lua"
+output_path = "~/.config/hypr/lua/colors.lua"
 
 # --- Quickshell ---
 [templates.quickshell]

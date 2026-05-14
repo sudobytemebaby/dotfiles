@@ -15,6 +15,7 @@ hl.env("ELECTRON_ENABLE_WAYLAND", "1")
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_TYPE", "wayland")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/home/sudobytemebaby/.local/share")
 
 -- GTK
 hl.env("ADW_DISABLE_PORTAL", "1")

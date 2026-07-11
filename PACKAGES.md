@@ -28,6 +28,7 @@ Legend:
 - `os-prober` — discovers other OSes for the grub menu
 - `btrfs-progs` — btrfs userspace utilities
 - `snapper` — btrfs snapshot manager
+- `snap-pac` — pacman hook that takes a pre/post snapshot around every transaction
 - `dosfstools` — FAT utilities (required for the EFI partition)
 - `exfatprogs` — exFAT support
 - `ntfs-3g` — NTFS support (for external Windows drives)

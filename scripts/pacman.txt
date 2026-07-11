@@ -122,6 +122,7 @@ sd
 simple-scan
 smartmontools
 snapper
+snap-pac
 snapshot
 sof-firmware
 starship

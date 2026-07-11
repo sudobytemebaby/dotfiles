@@ -46,9 +46,3 @@ floating_term("s", 800, 600)
 floating_term("m", 900, 700)
 floating_term("l", 1200, 800)
 floating_term("xl", 1340, 800)
-
-hl.layer_rule({
-	name = "noctalia-region-selector-no-anim",
-	match = { namespace = "noctalia-shell:regionSelector" },
-	no_anim = true,
-})

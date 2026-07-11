@@ -1,6 +1,8 @@
-local ipc = "qs -c noctalia-shell ipc call"
+local ipc = "noctalia msg "
 local homedir = os.getenv("HOME")
-local bin_dir = homedir .. "/.local/bin/"
+--local bin_dir = homedir .. "/.local/bin/"
+local tuis_dir = homedir .. "/.local/bin/tuis/"
+local menus_dir = homedir .. "/.local/bin/menus/"
 
 return {
 	-- core
@@ -8,22 +10,22 @@ return {
 	browser = "zen-browser",
 	file_explorer = "nautilus",
 	color_picker = "hyprpicker -a",
-	yazi = bin_dir .. "tui-files",
-	system_monitor = bin_dir .. "tui-btop",
 
 	-- system tui menus
-	wifi_menu = bin_dir .. "tui-wifi",
-	bluetooth_menu = bin_dir .. "tui-bluetooth",
-	audio_menu = bin_dir .. "tui-audio",
+	yazi = tuis_dir .. "tui-files",
+	system_monitor = tuis_dir .. "tui-btop",
+	wifi_menu = tuis_dir .. "tui-wifi",
+	bluetooth_menu = tuis_dir .. "tui-bluetooth",
+	audio_menu = tuis_dir .. "tui-audio",
 
-	-- noctalia ipc
-	screenshot = ipc .. " plugin:quick-screenshot menu",
-	lockscreen = ipc .. " lockScreen lock",
-	spotlight = ipc .. " launcher toggle",
-	clipboard_picker = ipc .. " launcher clipboard",
-	emoji_picker = ipc .. " launcher emoji",
-	powermenu = ipc .. " sessionMenu toggle",
-	wallpaper_picker = ipc .. " wallpaper toggle",
+	-- ipc
+	screenshot = ipc .. "screenshot",
+	lockscreen = ipc .. "session lock",
+	spotlight = "fuzzel",
+	clipboard_picker = tuis_dir .. "clipboard.sh",
+	emoji_picker = menus_dir .. "emoji-picker.sh",
+	powermenu = ipc .. "powermenu toggle",
+	wallpaper_picker = ipc .. "wallpaper toggle",
 
 	-- volume / brightness / mic
 	brightness_up = "brightnessctl set +5%",

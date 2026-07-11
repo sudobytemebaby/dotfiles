@@ -5,7 +5,7 @@ Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/xray run -config %h/.config/xray/xsn.json
+ExecStart=/usr/bin/xray run -config %h/.config/xray/xray.json
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5

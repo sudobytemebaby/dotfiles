@@ -1,0 +1,1 @@
+cd ~/Projects/efir-core/efir; echo "── сеть (одна на всех) ──"; grep -E "name:|driver:|subnet:" deploy/compose/docker-compose.network.yml; for f in services infra; do echo "── docker-compose.$f.yml ──"; awk '/^  [A-Za-z0-9_-]+:$/{svc=$1} /- efir-network$/{gsub(/:$/,"",svc); print "  "svc" → efir-network"}' deploy/compose/docker-compose.$f.yml; done

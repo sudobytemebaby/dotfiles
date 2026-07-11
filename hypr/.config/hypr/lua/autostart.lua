@@ -1,6 +1,6 @@
 hl.on("hyprland.start", function()
-	-- shell
-	hl.exec_cmd("qs -c noctalia-shell")
+	-- shell (quickshell renders the wallpaper itself — no hyprpaper needed)
+	hl.exec_cmd("noctalia")
 	hl.exec_cmd("hyprpolkitagent")
 	hl.exec_cmd("hypridle")
 
